@@ -53,12 +53,20 @@ def test_convert_timedelta_to_milliseconds_int32():
 def test_convert_timedeltas_to_seconds_real64():
     time_values = [10.5, -5e-10]
     test_result = _converters.convert_timedeltas_to_seconds_real64(time_values)
-    assert all([actual.value == pytest.approx(expected) for actual, expected in zip(test_result, time_values)])
-    assert all([isinstance(i, _visatype.ViReal64) for i in test_result])
+    assert all(
+        actual.value == pytest.approx(expected)
+        for actual, expected in zip(test_result, time_values)
+    )
+
+    assert all(isinstance(i, _visatype.ViReal64) for i in test_result)
     test_input = [hightime.timedelta(seconds=10.5), hightime.timedelta(nanoseconds=-0.5)]
     test_result = _converters.convert_timedeltas_to_seconds_real64(test_input)
-    assert all([actual.value == pytest.approx(expected) for actual, expected in zip(test_result, time_values)])
-    assert all([isinstance(i, _visatype.ViReal64) for i in test_result])
+    assert all(
+        actual.value == pytest.approx(expected)
+        for actual, expected in zip(test_result, time_values)
+    )
+
+    assert all(isinstance(i, _visatype.ViReal64) for i in test_result)
 
 
 def test_convert_seconds_real64_to_timedelta():
@@ -71,8 +79,12 @@ def test_convert_seconds_real64_to_timedelta():
 def test_convert_seconds_real64_to_timedeltas():
     time_values = [10.5, -5e-10]
     test_result = _converters.convert_seconds_real64_to_timedeltas(time_values)
-    assert all([actual.total_seconds() == pytest.approx(expected) for actual, expected in zip(test_result, time_values)])
-    assert all([isinstance(x, hightime.timedelta) for x in test_result])
+    assert all(
+        actual.total_seconds() == pytest.approx(expected)
+        for actual, expected in zip(test_result, time_values)
+    )
+
+    assert all(isinstance(x, hightime.timedelta) for x in test_result)
 
 
 # Tests - repeated capabilities

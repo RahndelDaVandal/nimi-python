@@ -32,7 +32,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -49,14 +49,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _Acquisition(object):
@@ -227,11 +227,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Instantiate any repeated capability objects
@@ -893,10 +895,9 @@ class Session(_SessionBase):
         self.tclk = nitclk.SessionReference(self._vi)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("resource_name=" + pp.pformat(resource_name))
-        param_list.append("options=" + pp.pformat(options))
-        param_list.append("reset_device=" + pp.pformat(reset_device))
+        param_list = [f"resource_name={pp.pformat(resource_name)}"]
+        param_list.append(f"options={pp.pformat(options)}")
+        param_list.append(f"reset_device={pp.pformat(reset_device)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -1057,7 +1058,7 @@ class Session(_SessionBase):
 
         '''
         if type(a_turtle) is not enums.Turtle:
-            raise TypeError('Parameter a_turtle must be of type ' + str(enums.Turtle))
+            raise TypeError(f'Parameter a_turtle must be of type {str(enums.Turtle)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         a_turtle_ctype = _visatype.ViInt16(a_turtle.value)  # case S130
         error_code = self._library.niFake_EnumInputFunctionWithDefaults(vi_ctype, a_turtle_ctype)
@@ -1136,7 +1137,10 @@ class Session(_SessionBase):
         if numpy.isfortran(waveform_data) is True:
             raise TypeError('waveform_data must be in C-order')
         if waveform_data.dtype is not numpy.dtype('float64'):
-            raise TypeError('waveform_data must be numpy.ndarray of dtype=float64, is ' + str(waveform_data.dtype))
+            raise TypeError(
+                f'waveform_data must be numpy.ndarray of dtype=float64, is {str(waveform_data.dtype)}'
+            )
+
         number_of_samples = len(waveform_data)
 
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
@@ -1684,9 +1688,12 @@ class Session(_SessionBase):
 
         '''
         if type(an_int_enum) is not enums.Turtle:
-            raise TypeError('Parameter an_int_enum must be of type ' + str(enums.Turtle))
+            raise TypeError(f'Parameter an_int_enum must be of type {str(enums.Turtle)}')
         if type(a_float_enum) is not enums.FloatEnum:
-            raise TypeError('Parameter a_float_enum must be of type ' + str(enums.FloatEnum))
+            raise TypeError(
+                f'Parameter a_float_enum must be of type {str(enums.FloatEnum)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         a_boolean_ctype = _visatype.ViBoolean(a_boolean)  # case S150
         an_int32_ctype = _visatype.ViInt32(an_int32)  # case S150
@@ -1903,7 +1910,10 @@ class Session(_SessionBase):
 
         '''
         if type(a_mobile_os_name) is not enums.MobileOSNames:
-            raise TypeError('Parameter a_mobile_os_name must be of type ' + str(enums.MobileOSNames))
+            raise TypeError(
+                f'Parameter a_mobile_os_name must be of type {str(enums.MobileOSNames)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         a_mobile_os_name_ctype = ctypes.create_string_buffer(a_mobile_os_name.value.encode(self._encoding))  # case C030
         error_code = self._library.niFake_StringValuedEnumInputFunctionWithDefaults(vi_ctype, a_mobile_os_name_ctype)
@@ -1987,7 +1997,10 @@ class Session(_SessionBase):
         if numpy.isfortran(waveform) is True:
             raise TypeError('waveform must be in C-order')
         if waveform.dtype is not numpy.dtype('float64'):
-            raise TypeError('waveform must be numpy.ndarray of dtype=float64, is ' + str(waveform.dtype))
+            raise TypeError(
+                f'waveform must be numpy.ndarray of dtype=float64, is {str(waveform.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         number_of_samples_ctype = _visatype.ViInt32(0 if waveform is None else len(waveform))  # case S160
         waveform_ctype = get_ctypes_pointer_for_buffer(value=waveform)  # case B510

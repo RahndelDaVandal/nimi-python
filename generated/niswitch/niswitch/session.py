@@ -25,7 +25,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -42,14 +42,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _Scan(object):
@@ -600,11 +600,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Instantiate any repeated capability objects
@@ -1580,11 +1582,10 @@ class Session(_SessionBase):
         self._vi = self._init_with_topology(resource_name, topology, simulate, reset_device)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("resource_name=" + pp.pformat(resource_name))
-        param_list.append("topology=" + pp.pformat(topology))
-        param_list.append("simulate=" + pp.pformat(simulate))
-        param_list.append("reset_device=" + pp.pformat(reset_device))
+        param_list = [f"resource_name={pp.pformat(resource_name)}"]
+        param_list.append(f"topology={pp.pformat(topology)}")
+        param_list.append(f"simulate={pp.pformat(simulate)}")
+        param_list.append(f"reset_device={pp.pformat(reset_device)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -2343,7 +2344,10 @@ class Session(_SessionBase):
 
         '''
         if type(relay_action) is not enums.RelayAction:
-            raise TypeError('Parameter relay_action must be of type ' + str(enums.RelayAction))
+            raise TypeError(
+                f'Parameter relay_action must be of type {str(enums.RelayAction)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         relay_name_ctype = ctypes.create_string_buffer(relay_name.encode(self._encoding))  # case C020
         relay_action_ctype = _visatype.ViInt32(relay_action.value)  # case S130
@@ -2395,9 +2399,15 @@ class Session(_SessionBase):
 
         '''
         if type(scan_advanced_output_connector) is not enums.ScanAdvancedOutput:
-            raise TypeError('Parameter scan_advanced_output_connector must be of type ' + str(enums.ScanAdvancedOutput))
+            raise TypeError(
+                f'Parameter scan_advanced_output_connector must be of type {str(enums.ScanAdvancedOutput)}'
+            )
+
         if type(scan_advanced_output_bus_line) is not enums.ScanAdvancedOutput:
-            raise TypeError('Parameter scan_advanced_output_bus_line must be of type ' + str(enums.ScanAdvancedOutput))
+            raise TypeError(
+                f'Parameter scan_advanced_output_bus_line must be of type {str(enums.ScanAdvancedOutput)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         scan_advanced_output_connector_ctype = _visatype.ViInt32(scan_advanced_output_connector.value)  # case S130
         scan_advanced_output_bus_line_ctype = _visatype.ViInt32(scan_advanced_output_bus_line.value)  # case S130
@@ -2437,9 +2447,15 @@ class Session(_SessionBase):
 
         '''
         if type(trigger_input_connector) is not enums.TriggerInput:
-            raise TypeError('Parameter trigger_input_connector must be of type ' + str(enums.TriggerInput))
+            raise TypeError(
+                f'Parameter trigger_input_connector must be of type {str(enums.TriggerInput)}'
+            )
+
         if type(trigger_input_bus_line) is not enums.TriggerInput:
-            raise TypeError('Parameter trigger_input_bus_line must be of type ' + str(enums.TriggerInput))
+            raise TypeError(
+                f'Parameter trigger_input_bus_line must be of type {str(enums.TriggerInput)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_input_connector_ctype = _visatype.ViInt32(trigger_input_connector.value)  # case S130
         trigger_input_bus_line_ctype = _visatype.ViInt32(trigger_input_bus_line.value)  # case S130

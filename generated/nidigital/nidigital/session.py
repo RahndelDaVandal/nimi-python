@@ -28,7 +28,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -45,14 +45,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _Burst(object):
@@ -1279,11 +1279,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Instantiate any repeated capability objects
@@ -1652,7 +1654,7 @@ class _SessionBase(object):
 
         '''
         if type(format) is not enums.DriveFormat:
-            raise TypeError('Parameter format must be of type ' + str(enums.DriveFormat))
+            raise TypeError(f'Parameter format must be of type {str(enums.DriveFormat)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         time_set_name_ctype = ctypes.create_string_buffer(time_set_name.encode(self._encoding))  # case C020
@@ -1706,7 +1708,7 @@ class _SessionBase(object):
 
         '''
         if type(format) is not enums.DriveFormat:
-            raise TypeError('Parameter format must be of type ' + str(enums.DriveFormat))
+            raise TypeError(f'Parameter format must be of type {str(enums.DriveFormat)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         time_set_name_ctype = ctypes.create_string_buffer(time_set_name.encode(self._encoding))  # case C020
@@ -1750,7 +1752,10 @@ class _SessionBase(object):
 
         '''
         if type(drive_format) is not enums.DriveFormat:
-            raise TypeError('Parameter drive_format must be of type ' + str(enums.DriveFormat))
+            raise TypeError(
+                f'Parameter drive_format must be of type {str(enums.DriveFormat)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         time_set_name_ctype = ctypes.create_string_buffer(time_set_name.encode(self._encoding))  # case C020
@@ -1794,7 +1799,7 @@ class _SessionBase(object):
 
         '''
         if type(edge) is not enums.TimeSetEdgeType:
-            raise TypeError('Parameter edge must be of type ' + str(enums.TimeSetEdgeType))
+            raise TypeError(f'Parameter edge must be of type {str(enums.TimeSetEdgeType)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         time_set_name_ctype = ctypes.create_string_buffer(time_set_name.encode(self._encoding))  # case C020
@@ -1932,7 +1937,7 @@ class _SessionBase(object):
 
         '''
         if type(bit_order) is not enums.BitOrder:
-            raise TypeError('Parameter bit_order must be of type ' + str(enums.BitOrder))
+            raise TypeError(f'Parameter bit_order must be of type {str(enums.BitOrder)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_name_ctype = ctypes.create_string_buffer(waveform_name.encode(self._encoding))  # case C020
@@ -1969,7 +1974,10 @@ class _SessionBase(object):
 
         '''
         if type(data_mapping) is not enums.SourceDataMapping:
-            raise TypeError('Parameter data_mapping must be of type ' + str(enums.SourceDataMapping))
+            raise TypeError(
+                f'Parameter data_mapping must be of type {str(enums.SourceDataMapping)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_name_ctype = ctypes.create_string_buffer(waveform_name.encode(self._encoding))  # case C020
@@ -2012,9 +2020,12 @@ class _SessionBase(object):
 
         '''
         if type(data_mapping) is not enums.SourceDataMapping:
-            raise TypeError('Parameter data_mapping must be of type ' + str(enums.SourceDataMapping))
+            raise TypeError(
+                f'Parameter data_mapping must be of type {str(enums.SourceDataMapping)}'
+            )
+
         if type(bit_order) is not enums.BitOrder:
-            raise TypeError('Parameter bit_order must be of type ' + str(enums.BitOrder))
+            raise TypeError(f'Parameter bit_order must be of type {str(enums.BitOrder)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_name_ctype = ctypes.create_string_buffer(waveform_name.encode(self._encoding))  # case C020
@@ -2109,10 +2120,7 @@ class _SessionBase(object):
         '''
         self._burst_pattern(start_label, select_digital_function, wait_until_done, timeout)
 
-        if wait_until_done:
-            return self.get_site_pass_fail()
-        else:
-            return None
+        return self.get_site_pass_fail() if wait_until_done else None
 
     @ivi_synchronized
     def fetch_capture_waveform(self, waveform_name, samples_to_read, timeout=hightime.timedelta(seconds=10.0)):
@@ -3078,7 +3086,10 @@ class _SessionBase(object):
 
         '''
         if type(site_result_type) is not enums._SiteResultType:
-            raise TypeError('Parameter site_result_type must be of type ' + str(enums._SiteResultType))
+            raise TypeError(
+                f'Parameter site_result_type must be of type {str(enums._SiteResultType)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         site_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         site_result_type_ctype = _visatype.ViInt32(site_result_type.value)  # case S130
@@ -3164,7 +3175,7 @@ class _SessionBase(object):
 
         '''
         if type(edge) is not enums.TimeSetEdgeType:
-            raise TypeError('Parameter edge must be of type ' + str(enums.TimeSetEdgeType))
+            raise TypeError(f'Parameter edge must be of type {str(enums.TimeSetEdgeType)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         pin_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         time_set_name_ctype = ctypes.create_string_buffer(time_set_name.encode(self._encoding))  # case C020
@@ -3337,7 +3348,10 @@ class _SessionBase(object):
 
         '''
         if type(measurement_type) is not enums.PPMUMeasurementType:
-            raise TypeError('Parameter measurement_type must be of type ' + str(enums.PPMUMeasurementType))
+            raise TypeError(
+                f'Parameter measurement_type must be of type {str(enums.PPMUMeasurementType)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         measurement_type_ctype = _visatype.ViInt32(measurement_type.value)  # case S130
@@ -3690,7 +3704,10 @@ class _SessionBase(object):
 
         '''
         if type(state) is not enums.WriteStaticPinState:
-            raise TypeError('Parameter state must be of type ' + str(enums.WriteStaticPinState))
+            raise TypeError(
+                f'Parameter state must be of type {str(enums.WriteStaticPinState)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         state_ctype = _visatype.ViUInt8(state.value)  # case S130
@@ -3795,10 +3812,9 @@ class Session(_SessionBase):
         self.tclk = nitclk.SessionReference(self._vi)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("resource_name=" + pp.pformat(resource_name))
-        param_list.append("reset_device=" + pp.pformat(reset_device))
-        param_list.append("options=" + pp.pformat(options))
+        param_list = [f"resource_name={pp.pformat(resource_name)}"]
+        param_list.append(f"reset_device={pp.pformat(reset_device)}")
+        param_list.append(f"options={pp.pformat(options)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -4053,7 +4069,10 @@ class Session(_SessionBase):
         '''
         from collections.abc import Mapping
         if not isinstance(waveform_data, Mapping):
-            raise TypeError("Expecting waveform_data to be a dictionary but got {}".format(type(waveform_data)))
+            raise TypeError(
+                f"Expecting waveform_data to be a dictionary but got {type(waveform_data)}"
+            )
+
         site_list = []
         # We assume all the entries are the same length (we'll check later) to make the array the correct size
         # Get an entry from the dictionary from https://stackoverflow.com/questions/30362391/how-do-you-find-the-first-key-in-a-dictionary
@@ -4064,12 +4083,11 @@ class Session(_SessionBase):
         data = array.array('L', [0] * (len(waveform_data) * actual_samples_per_waveform))
         mv = memoryview(data)
 
-        i = 0
-        for site in waveform_data:
+        for i, site in enumerate(waveform_data):
             if len(waveform_data[site]) != actual_samples_per_waveform:
                 raise ValueError('Mismatched length of waveforms. All must be the same length.')
             # Check the type by using string comparison so that we don't import numpy unnecessarily.
-            if str(type(waveform_data[site])).find("'numpy.ndarray'") != -1:
+            if "'numpy.ndarray'" in str(type(waveform_data[site])):
                 import numpy
                 if waveform_data[site].dtype == numpy.uint32:
                     wfm = array.array('L', waveform_data[site])
@@ -4080,21 +4098,22 @@ class Session(_SessionBase):
                 if waveform_data[site].typecode == 'L':
                     wfm = waveform_data[site]
                 else:
-                    raise TypeError('Wrong waveform_data array element type. Must be unsigned 32 bit int ("L"), was {}'.format(waveform_data[site].typecode))
+                    raise TypeError(
+                        f'Wrong waveform_data array element type. Must be unsigned 32 bit int ("L"), was {waveform_data[site].typecode}'
+                    )
+
 
             elif isinstance(waveform_data[site], list):
                 wfm = array.array('L', waveform_data[site])
 
             else:
-                raise TypeError('Unknown array type: {}'.format(type(waveform_data[site])))
+                raise TypeError(f'Unknown array type: {type(waveform_data[site])}')
 
             site_list.append(site)
 
             start = i * actual_samples_per_waveform
             end = start + actual_samples_per_waveform
             mv[start:end] = wfm
-
-            i += 1
 
         self.sites[site_list]._write_source_waveform_site_unique_u32(waveform_name, len(waveform_data), actual_samples_per_waveform, data)
 
@@ -4308,7 +4327,7 @@ class Session(_SessionBase):
 
         '''
         if type(flag) is not enums.SequencerFlag:
-            raise TypeError('Parameter flag must be of type ' + str(enums.SequencerFlag))
+            raise TypeError(f'Parameter flag must be of type {str(enums.SequencerFlag)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         flag_ctype = ctypes.create_string_buffer(flag.value.encode(self._encoding))  # case C030
         value_ctype = _visatype.ViBoolean()  # case S220
@@ -4348,7 +4367,10 @@ class Session(_SessionBase):
 
         '''
         if type(reg) is not enums.SequencerRegister:
-            raise TypeError('Parameter reg must be of type ' + str(enums.SequencerRegister))
+            raise TypeError(
+                f'Parameter reg must be of type {str(enums.SequencerRegister)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         reg_ctype = ctypes.create_string_buffer(reg.value.encode(self._encoding))  # case C030
         value_ctype = _visatype.ViInt32()  # case S220
@@ -4414,7 +4436,10 @@ class Session(_SessionBase):
 
         '''
         if type(trigger) is not enums.SoftwareTrigger:
-            raise TypeError('Parameter trigger must be of type ' + str(enums.SoftwareTrigger))
+            raise TypeError(
+                f'Parameter trigger must be of type {str(enums.SoftwareTrigger)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_ctype = _visatype.ViInt32(trigger.value)  # case S130
         trigger_identifier_ctype = ctypes.create_string_buffer(trigger_identifier.encode(self._encoding))  # case C020
@@ -4488,7 +4513,7 @@ class Session(_SessionBase):
 
         '''
         if type(flag) is not enums.SequencerFlag:
-            raise TypeError('Parameter flag must be of type ' + str(enums.SequencerFlag))
+            raise TypeError(f'Parameter flag must be of type {str(enums.SequencerFlag)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         flag_ctype = ctypes.create_string_buffer(flag.value.encode(self._encoding))  # case C030
         value_ctype = _visatype.ViBoolean(value)  # case S150
@@ -4526,7 +4551,10 @@ class Session(_SessionBase):
 
         '''
         if type(reg) is not enums.SequencerRegister:
-            raise TypeError('Parameter reg must be of type ' + str(enums.SequencerRegister))
+            raise TypeError(
+                f'Parameter reg must be of type {str(enums.SequencerRegister)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         reg_ctype = ctypes.create_string_buffer(reg.value.encode(self._encoding))  # case C030
         value_ctype = _visatype.ViInt32(value)  # case S150

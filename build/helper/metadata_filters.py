@@ -229,7 +229,10 @@ def filter_parameters(function, parameter_usage_options):
     Filters and reorders the parameters of the function passed in based on parameter_usage_options.
     '''
     if type(parameter_usage_options) is not ParameterUsageOptions:
-        raise TypeError('parameter_usage_options must be of type ' + str(ParameterUsageOptions))
+        raise TypeError(
+            f'parameter_usage_options must be of type {str(ParameterUsageOptions)}'
+        )
+
 
     options_to_use = _ParameterUsageOptionsFiltering[parameter_usage_options]
 
@@ -275,13 +278,8 @@ def filter_parameters(function, parameter_usage_options):
 
     # Reorder based on options
     if options_to_use['reordered_for_default_values']:
-        new_order = []
-        for x in parameters_to_use:
-            if 'default_value' not in x:
-                new_order.append(x)
-        for x in parameters_to_use:
-            if 'default_value' in x:
-                new_order.append(x)
+        new_order = [x for x in parameters_to_use if 'default_value' not in x]
+        new_order.extend(x for x in parameters_to_use if 'default_value' in x)
         parameters_to_use = new_order
 
     return parameters_to_use
@@ -317,10 +315,12 @@ def filter_ivi_dance_twist_parameters(function):
         Parameters dict if one is found
     '''
     params = filter_parameters(function, ParameterUsageOptions.IVI_DANCE_PARAMETER)
-    if len(params) > 0:
-        if params[0]['size']['mechanism'] == 'ivi-dance-with-a-twist':
-            size_param = params[0]['size']['value_twist']
-            assert all(x['size']['value_twist'] == size_param for x in params)
+    if (
+        len(params) > 0
+        and params[0]['size']['mechanism'] == 'ivi-dance-with-a-twist'
+    ):
+        size_param = params[0]['size']['value_twist']
+        assert all(x['size']['value_twist'] == size_param for x in params)
     return params
 
 
@@ -344,17 +344,29 @@ def filter_len_parameters(function):
 
 def filter_codegen_functions(functions):
     '''Returns function metadata only for those functions to be included in codegen'''
-    return {k: v for k, v in functions.items() if v['codegen_method'] != 'no' and v['codegen_method'] != 'library-only'}
+    return {
+        k: v
+        for k, v in functions.items()
+        if v['codegen_method'] not in ['no', 'library-only']
+    }
 
 
 def filter_library_functions(functions):
     '''Returns function metadata only for those functions to included the library layer (library.py and mock_helper.py)'''
-    return {k: v for k, v in functions.items() if v['codegen_method'] != 'no' and v['codegen_method'] != 'python-only'}
+    return {
+        k: v
+        for k, v in functions.items()
+        if v['codegen_method'] not in ['no', 'python-only']
+    }
 
 
 def filter_public_functions(functions):
     '''Returns function metadata only for those functions that are public'''
-    return {k: v for k, v in functions.items() if v['codegen_method'] == 'public' or v['codegen_method'] == 'python-only'}
+    return {
+        k: v
+        for k, v in functions.items()
+        if v['codegen_method'] in ['public', 'python-only']
+    }
 
 
 def filter_codegen_attributes(attributes):

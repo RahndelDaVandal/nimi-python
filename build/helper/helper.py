@@ -64,13 +64,14 @@ def get_python_type_for_api_type(api_type, config):
 
     if api_type in _type_map and _type_map[api_type]['python_type'] is not None:
         return _type_map[api_type]['python_type']
-    else:
-        for c in config['custom_types']:
-            if c['ctypes_type'] == api_type:
-                return c['python_name']
-
-    # We didn't find it anywhere so return as is
-    return api_type
+    return next(
+        (
+            c['python_name']
+            for c in config['custom_types']
+            if c['ctypes_type'] == api_type
+        ),
+        api_type,
+    )
 
 
 def get_numpy_type_for_api_type(api_type, config):
@@ -81,12 +82,11 @@ def get_numpy_type_for_api_type(api_type, config):
 
     if api_type in _type_map and _type_map[api_type]['numpy_type'] is not None:
         return _type_map[api_type]['numpy_type']
-    else:
-        for c in config['custom_types']:
-            if c['ctypes_type'] == api_type:
-                return c['python_name']
-        # We didn't find it so assert
-        assert False, 'Unknown value for api_type: {0}'.format(api_type)
+    for c in config['custom_types']:
+        if c['ctypes_type'] == api_type:
+            return c['python_name']
+    # We didn't find it so assert
+    assert False, 'Unknown value for api_type: {0}'.format(api_type)
 
 
 def get_array_type_for_api_type(api_type):
@@ -116,21 +116,18 @@ def get_development_status(config):
     '''
     v = Version(config['module_version'])
     if v.release[0] == 0 and v.release[1] < 5:
-        dev_status = '3 - Alpha'
+        return '3 - Alpha'
     elif v.release[0] == 0:
-        dev_status = '4 - Beta'
-    else:
-        if v.dev is not None or (v.pre is not None and v.pre[0] == 'a'):
+        return '4 - Beta'
+    elif v.dev is not None or (v.pre is not None and v.pre[0] == 'a'):
             # .devN or .aN
-            dev_status = '3 - Alpha'
-        elif v.pre is not None:
+        return '3 - Alpha'
+    elif v.pre is not None:
             # .bN, .cN, .rcN
-            dev_status = '4 - Beta'
-        else:
+        return '4 - Beta'
+    else:
             # <nothing> or .postN
-            dev_status = '5 - Production/Stable'
-
-    return dev_status
+        return '5 - Production/Stable'
 
 
 def enum_uses_converter(enum):
@@ -154,9 +151,8 @@ def enum_uses_converter(enum):
 
 # Tests
 def test_get_development_status():
-    config = {}
+    config = {'module_version': '0.0.0.dev0'}
 
-    config['module_version'] = '0.0.0.dev0'
     assert get_development_status(config) == '3 - Alpha'
 
     config['module_version'] = '0.0.0'

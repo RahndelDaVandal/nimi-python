@@ -32,7 +32,7 @@ class DriverError(Error):
         assert (_is_error(code)), "Should not raise Error if code is not fatal."
         self.code = code
         self.description = description
-        super(DriverError, self).__init__(str(self.code) + ": " + self.description)
+        super(DriverError, self).__init__(f"{str(self.code)}: {self.description}")
 
 
 class DriverWarning(Warning):
@@ -47,7 +47,9 @@ class UnsupportedConfigurationError(Error):
     '''An error due to using this module in an usupported platform.'''
 
     def __init__(self):
-        super(UnsupportedConfigurationError, self).__init__('System configuration is unsupported: ' + platform.architecture()[0] + ' ' + platform.system())
+        super(UnsupportedConfigurationError, self).__init__(
+            f'System configuration is unsupported: {platform.architecture()[0]} {platform.system()}'
+        )
 
 
 class DriverNotInstalledError(Error):
@@ -82,13 +84,7 @@ def handle_error(session, code, ignore_warnings, is_error_handling):
     if _is_success(code) or (_is_warning(code) and ignore_warnings):
         return
 
-    if is_error_handling:
-        # The caller is in the midst of error handling and an error occurred.
-        # Don't try to get the description or we'll start recursing until the stack overflows.
-        description = ''
-    else:
-        description = session._get_error_description(code)
-
+    description = '' if is_error_handling else session._get_error_description(code)
     if _is_error(code):
         raise DriverError(code, description)
 

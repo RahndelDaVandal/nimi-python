@@ -181,7 +181,7 @@ class TestSession(object):
         if int(name_buffer_size.value) == 0:
             return (len(self.time_set_name_looping[time_set_index_int]))
         bytes_to_copy = self.time_set_name_looping[time_set_index_int].encode('ascii')
-        for i in range(0, len(bytes_to_copy)):
+        for i in range(len(bytes_to_copy)):
             name[i] = bytes_to_copy[i]
         return 0
 
@@ -198,7 +198,7 @@ class TestSession(object):
         if int(pin_data_buffer_size.value) == 0:
             actual_num_pin_data.contents.value = len(self.expected_pin_states_looping[sample_index_int][dut_cycle_index_int])
             return actual_num_pin_data.contents.value
-        for i in range(0, int(pin_data_buffer_size.value)):
+        for i in range(int(pin_data_buffer_size.value)):
             expected_pin_states[i] = self.expected_pin_states_looping[sample_index_int][dut_cycle_index_int][i].value
             actual_pin_states[i] = self.actual_pin_states_looping[sample_index_int][dut_cycle_index_int][i].value
             per_pin_pass_fail[i] = self.per_pin_pass_fail_looping[sample_index_int][dut_cycle_index_int][i]
@@ -219,7 +219,10 @@ class TestSession(object):
         self.patched_library.niDigital_FetchHistoryRAMScanCycleNumber.side_effect = self.niDigital_FetchHistoryRAMScanCycleNumber_looping
         self.patched_library.niDigital_FetchHistoryRAMCyclePinData.side_effect = self.niDigital_FetchHistoryRAMCyclePinData_looping
         self.patched_library.niDigital_GetPatternPinList.side_effect = self.side_effects_helper.niDigital_GetPatternPinList
-        pin_list = ['LO' + str(i) for i in range(4)] + ['HI' + str(i) for i in range(4)]
+        pin_list = [f'LO{str(i)}' for i in range(4)] + [
+            f'HI{str(i)}' for i in range(4)
+        ]
+
         self.side_effects_helper['GetPatternPinList']['pinList'] = ','.join(pin_list)
         with nidigital.Session('') as session:
             history_ram_cycle_info = session.sites[1].fetch_history_ram_cycle_information(
@@ -232,7 +235,7 @@ class TestSession(object):
             assert self.patched_library.niDigital_FetchHistoryRAMCyclePinData.call_count == 20  # 10 DUT cycles
 
             assert len(history_ram_cycle_info) == 7
-            assert all([i.pattern_name == 'new_pattern' for i in history_ram_cycle_info])
+            assert all(i.pattern_name == 'new_pattern' for i in history_ram_cycle_info)
 
             time_set_names = [i.time_set_name for i in history_ram_cycle_info]
             assert time_set_names == ['t0', 'tScan', 'tScan', 't2X', 't2X', 't2X', 't0']
@@ -274,7 +277,7 @@ class TestSession(object):
         if int(pin_data_buffer_size.value) == 0:
             actual_num_pin_data.contents.value = len(self.expected_pin_states_check_pins_looping[sample_index_int][dut_cycle_index_int])
             return actual_num_pin_data.contents.value
-        for i in range(0, int(pin_data_buffer_size.value)):
+        for i in range(int(pin_data_buffer_size.value)):
             expected_pin_states[i] = self.expected_pin_states_check_pins_looping[sample_index_int][dut_cycle_index_int][i].value
             actual_pin_states[i] = self.actual_pin_states_check_pins_looping[sample_index_int][dut_cycle_index_int][i].value
             per_pin_pass_fail[i] = self.per_pin_pass_fail_check_pins_looping[sample_index_int][dut_cycle_index_int][i]
@@ -310,7 +313,11 @@ class TestSession(object):
 
     # Helper function for validating site behavior in fetch_history_ram_cycle_information.
     def niDigital_GetHistoryRAMSampleCount_check_site_looping(self, vi, site, sample_count):  # noqa: N802
-        assert site.value.decode('ascii') == 'site{}'.format(self.site_numbers_looping[self.iteration_check_site_looping])
+        assert (
+            site.value.decode('ascii')
+            == f'site{self.site_numbers_looping[self.iteration_check_site_looping]}'
+        )
+
         sample_count.contents.value = 0  # we don't care if this is right as long as the fetch does not error
         self.iteration_check_site_looping += 1
         return 0

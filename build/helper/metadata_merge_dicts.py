@@ -20,10 +20,7 @@ def merge_helper(metadata, metadata_type, config, use_re):
 
     # Delete any entries that are empty
     # Have to do this in two steps. Otherwise the dictionary changes size and errors
-    to_delete = []
-    for m in metadata:
-        if type(m) is dict and len(metadata[m]) == 0:
-            to_delete.append(m)
+    to_delete = [m for m in metadata if type(m) is dict and len(metadata[m]) == 0]
     for m in to_delete:
         metadata.pop(m, None)
 
@@ -57,15 +54,12 @@ def merge_dicts(into, outof, use_re, dict_name):
             elif type(into) is list:
                 for item2 in outof[item]:
                     into[item][item2] = outof[item][item2]
-            else:
-                # attributes keys are integers so they do not need the regex check (and
-                # in fact will error)
-                if type(item) is str:
-                    # Handle regex in addon
-                    for item2 in into:
-                        if use_re is True and re.search(item, item2):
-                            assert type(into[item2]) is dict
-                            merge_dicts(into[item2], outof[item], use_re, None)
+            elif type(item) is str:
+                # Handle regex in addon
+                for item2 in into:
+                    if use_re is True and re.search(item, item2):
+                        assert type(into[item2]) is dict
+                        merge_dicts(into[item2], outof[item], use_re, None)
         else:
             into[item] = outof[item]
 
