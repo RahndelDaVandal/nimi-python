@@ -82,10 +82,10 @@ def print_diagnostic_information():
     row_format = '    {:<10} {}'
     for type in ['OS', 'Driver', 'Module', 'Python']:
         typename = type.lower()
-        print(type + ':')
+        print(f'{type}:')
         for item in info[typename]:
             if item != 'packages':
-                print(row_format.format(item.title() + ':', info[typename][item]))
+                print(row_format.format(f'{item.title()}:', info[typename][item]))
     print('    Installed Packages:')
     for p in info['python']['packages']:
         print((' ' * 8) + p['name'] + '==' + p['version'])

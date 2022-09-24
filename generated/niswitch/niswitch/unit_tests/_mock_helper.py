@@ -15,103 +15,50 @@ class MockFunctionCallError(Exception):
 
 class SideEffectsHelper(object):
     def __init__(self):
-        self._defaults = {}
-        self._defaults['AbortScan'] = {}
+        self._defaults = {'AbortScan': {}}
         self._defaults['AbortScan']['return'] = 0
-        self._defaults['CanConnect'] = {}
-        self._defaults['CanConnect']['return'] = 0
-        self._defaults['CanConnect']['pathCapability'] = None
-        self._defaults['Commit'] = {}
-        self._defaults['Commit']['return'] = 0
-        self._defaults['Connect'] = {}
-        self._defaults['Connect']['return'] = 0
-        self._defaults['ConnectMultiple'] = {}
-        self._defaults['ConnectMultiple']['return'] = 0
-        self._defaults['Disable'] = {}
-        self._defaults['Disable']['return'] = 0
-        self._defaults['Disconnect'] = {}
-        self._defaults['Disconnect']['return'] = 0
-        self._defaults['DisconnectAll'] = {}
-        self._defaults['DisconnectAll']['return'] = 0
-        self._defaults['DisconnectMultiple'] = {}
-        self._defaults['DisconnectMultiple']['return'] = 0
-        self._defaults['GetAttributeViBoolean'] = {}
-        self._defaults['GetAttributeViBoolean']['return'] = 0
-        self._defaults['GetAttributeViBoolean']['attributeValue'] = None
-        self._defaults['GetAttributeViInt32'] = {}
-        self._defaults['GetAttributeViInt32']['return'] = 0
-        self._defaults['GetAttributeViInt32']['attributeValue'] = None
-        self._defaults['GetAttributeViReal64'] = {}
-        self._defaults['GetAttributeViReal64']['return'] = 0
-        self._defaults['GetAttributeViReal64']['attributeValue'] = None
-        self._defaults['GetAttributeViString'] = {}
-        self._defaults['GetAttributeViString']['return'] = 0
-        self._defaults['GetAttributeViString']['attributeValue'] = None
-        self._defaults['GetChannelName'] = {}
-        self._defaults['GetChannelName']['return'] = 0
-        self._defaults['GetChannelName']['channelNameBuffer'] = None
-        self._defaults['GetError'] = {}
-        self._defaults['GetError']['return'] = 0
-        self._defaults['GetError']['code'] = None
-        self._defaults['GetError']['description'] = None
-        self._defaults['GetPath'] = {}
-        self._defaults['GetPath']['return'] = 0
-        self._defaults['GetPath']['path'] = None
-        self._defaults['GetRelayCount'] = {}
-        self._defaults['GetRelayCount']['return'] = 0
-        self._defaults['GetRelayCount']['relayCount'] = None
-        self._defaults['GetRelayName'] = {}
-        self._defaults['GetRelayName']['return'] = 0
-        self._defaults['GetRelayName']['relayNameBuffer'] = None
-        self._defaults['GetRelayPosition'] = {}
-        self._defaults['GetRelayPosition']['return'] = 0
-        self._defaults['GetRelayPosition']['relayPosition'] = None
-        self._defaults['InitWithTopology'] = {}
-        self._defaults['InitWithTopology']['return'] = 0
-        self._defaults['InitWithTopology']['vi'] = None
-        self._defaults['InitiateScan'] = {}
-        self._defaults['InitiateScan']['return'] = 0
-        self._defaults['LockSession'] = {}
-        self._defaults['LockSession']['return'] = 0
-        self._defaults['LockSession']['callerHasLock'] = None
-        self._defaults['RelayControl'] = {}
-        self._defaults['RelayControl']['return'] = 0
-        self._defaults['ResetWithDefaults'] = {}
-        self._defaults['ResetWithDefaults']['return'] = 0
-        self._defaults['RouteScanAdvancedOutput'] = {}
-        self._defaults['RouteScanAdvancedOutput']['return'] = 0
-        self._defaults['RouteTriggerInput'] = {}
-        self._defaults['RouteTriggerInput']['return'] = 0
-        self._defaults['SendSoftwareTrigger'] = {}
-        self._defaults['SendSoftwareTrigger']['return'] = 0
-        self._defaults['SetAttributeViBoolean'] = {}
-        self._defaults['SetAttributeViBoolean']['return'] = 0
-        self._defaults['SetAttributeViInt32'] = {}
-        self._defaults['SetAttributeViInt32']['return'] = 0
-        self._defaults['SetAttributeViReal64'] = {}
-        self._defaults['SetAttributeViReal64']['return'] = 0
-        self._defaults['SetAttributeViString'] = {}
-        self._defaults['SetAttributeViString']['return'] = 0
-        self._defaults['SetPath'] = {}
-        self._defaults['SetPath']['return'] = 0
-        self._defaults['UnlockSession'] = {}
-        self._defaults['UnlockSession']['return'] = 0
-        self._defaults['UnlockSession']['callerHasLock'] = None
-        self._defaults['WaitForDebounce'] = {}
-        self._defaults['WaitForDebounce']['return'] = 0
-        self._defaults['WaitForScanComplete'] = {}
-        self._defaults['WaitForScanComplete']['return'] = 0
-        self._defaults['close'] = {}
-        self._defaults['close']['return'] = 0
-        self._defaults['error_message'] = {}
-        self._defaults['error_message']['return'] = 0
-        self._defaults['error_message']['errorMessage'] = None
-        self._defaults['reset'] = {}
-        self._defaults['reset']['return'] = 0
-        self._defaults['self_test'] = {}
-        self._defaults['self_test']['return'] = 0
-        self._defaults['self_test']['selfTestResult'] = None
-        self._defaults['self_test']['selfTestMessage'] = None
+        self._defaults['CanConnect'] = {'return': 0, 'pathCapability': None}
+        self._defaults['Commit'] = {'return': 0}
+        self._defaults['Connect'] = {'return': 0}
+        self._defaults['ConnectMultiple'] = {'return': 0}
+        self._defaults['Disable'] = {'return': 0}
+        self._defaults['Disconnect'] = {'return': 0}
+        self._defaults['DisconnectAll'] = {'return': 0}
+        self._defaults['DisconnectMultiple'] = {'return': 0}
+        self._defaults['GetAttributeViBoolean'] = {'return': 0, 'attributeValue': None}
+        self._defaults['GetAttributeViInt32'] = {'return': 0, 'attributeValue': None}
+        self._defaults['GetAttributeViReal64'] = {'return': 0, 'attributeValue': None}
+        self._defaults['GetAttributeViString'] = {'return': 0, 'attributeValue': None}
+        self._defaults['GetChannelName'] = {'return': 0, 'channelNameBuffer': None}
+        self._defaults['GetError'] = {'return': 0, 'code': None, 'description': None}
+        self._defaults['GetPath'] = {'return': 0, 'path': None}
+        self._defaults['GetRelayCount'] = {'return': 0, 'relayCount': None}
+        self._defaults['GetRelayName'] = {'return': 0, 'relayNameBuffer': None}
+        self._defaults['GetRelayPosition'] = {'return': 0, 'relayPosition': None}
+        self._defaults['InitWithTopology'] = {'return': 0, 'vi': None}
+        self._defaults['InitiateScan'] = {'return': 0}
+        self._defaults['LockSession'] = {'return': 0, 'callerHasLock': None}
+        self._defaults['RelayControl'] = {'return': 0}
+        self._defaults['ResetWithDefaults'] = {'return': 0}
+        self._defaults['RouteScanAdvancedOutput'] = {'return': 0}
+        self._defaults['RouteTriggerInput'] = {'return': 0}
+        self._defaults['SendSoftwareTrigger'] = {'return': 0}
+        self._defaults['SetAttributeViBoolean'] = {'return': 0}
+        self._defaults['SetAttributeViInt32'] = {'return': 0}
+        self._defaults['SetAttributeViReal64'] = {'return': 0}
+        self._defaults['SetAttributeViString'] = {'return': 0}
+        self._defaults['SetPath'] = {'return': 0}
+        self._defaults['UnlockSession'] = {'return': 0, 'callerHasLock': None}
+        self._defaults['WaitForDebounce'] = {'return': 0}
+        self._defaults['WaitForScanComplete'] = {'return': 0}
+        self._defaults['close'] = {'return': 0}
+        self._defaults['error_message'] = {'return': 0, 'errorMessage': None}
+        self._defaults['reset'] = {'return': 0}
+        self._defaults['self_test'] = {
+            'return': 0,
+            'selfTestResult': None,
+            'selfTestMessage': None,
+        }
 
     def __getitem__(self, func):
         return self._defaults[func]
@@ -120,8 +67,6 @@ class SideEffectsHelper(object):
         self._defaults[func] = val
 
     def niSwitch_AbortScan(self, vi):  # noqa: N802
-        if self._defaults['AbortScan']['return'] != 0:
-            return self._defaults['AbortScan']['return']
         return self._defaults['AbortScan']['return']
 
     def niSwitch_CanConnect(self, vi, channel1, channel2, path_capability):  # noqa: N802
@@ -135,38 +80,24 @@ class SideEffectsHelper(object):
         return self._defaults['CanConnect']['return']
 
     def niSwitch_Commit(self, vi):  # noqa: N802
-        if self._defaults['Commit']['return'] != 0:
-            return self._defaults['Commit']['return']
         return self._defaults['Commit']['return']
 
     def niSwitch_Connect(self, vi, channel1, channel2):  # noqa: N802
-        if self._defaults['Connect']['return'] != 0:
-            return self._defaults['Connect']['return']
         return self._defaults['Connect']['return']
 
     def niSwitch_ConnectMultiple(self, vi, connection_list):  # noqa: N802
-        if self._defaults['ConnectMultiple']['return'] != 0:
-            return self._defaults['ConnectMultiple']['return']
         return self._defaults['ConnectMultiple']['return']
 
     def niSwitch_Disable(self, vi):  # noqa: N802
-        if self._defaults['Disable']['return'] != 0:
-            return self._defaults['Disable']['return']
         return self._defaults['Disable']['return']
 
     def niSwitch_Disconnect(self, vi, channel1, channel2):  # noqa: N802
-        if self._defaults['Disconnect']['return'] != 0:
-            return self._defaults['Disconnect']['return']
         return self._defaults['Disconnect']['return']
 
     def niSwitch_DisconnectAll(self, vi):  # noqa: N802
-        if self._defaults['DisconnectAll']['return'] != 0:
-            return self._defaults['DisconnectAll']['return']
         return self._defaults['DisconnectAll']['return']
 
     def niSwitch_DisconnectMultiple(self, vi, disconnection_list):  # noqa: N802
-        if self._defaults['DisconnectMultiple']['return'] != 0:
-            return self._defaults['DisconnectMultiple']['return']
         return self._defaults['DisconnectMultiple']['return']
 
     def niSwitch_GetAttributeViBoolean(self, vi, channel_name, attribute_id, attribute_value):  # noqa: N802
@@ -285,8 +216,6 @@ class SideEffectsHelper(object):
         return self._defaults['InitWithTopology']['return']
 
     def niSwitch_InitiateScan(self, vi):  # noqa: N802
-        if self._defaults['InitiateScan']['return'] != 0:
-            return self._defaults['InitiateScan']['return']
         return self._defaults['InitiateScan']['return']
 
     def niSwitch_LockSession(self, vi, caller_has_lock):  # noqa: N802
@@ -300,53 +229,33 @@ class SideEffectsHelper(object):
         return self._defaults['LockSession']['return']
 
     def niSwitch_RelayControl(self, vi, relay_name, relay_action):  # noqa: N802
-        if self._defaults['RelayControl']['return'] != 0:
-            return self._defaults['RelayControl']['return']
         return self._defaults['RelayControl']['return']
 
     def niSwitch_ResetWithDefaults(self, vi):  # noqa: N802
-        if self._defaults['ResetWithDefaults']['return'] != 0:
-            return self._defaults['ResetWithDefaults']['return']
         return self._defaults['ResetWithDefaults']['return']
 
     def niSwitch_RouteScanAdvancedOutput(self, vi, scan_advanced_output_connector, scan_advanced_output_bus_line, invert):  # noqa: N802
-        if self._defaults['RouteScanAdvancedOutput']['return'] != 0:
-            return self._defaults['RouteScanAdvancedOutput']['return']
         return self._defaults['RouteScanAdvancedOutput']['return']
 
     def niSwitch_RouteTriggerInput(self, vi, trigger_input_connector, trigger_input_bus_line, invert):  # noqa: N802
-        if self._defaults['RouteTriggerInput']['return'] != 0:
-            return self._defaults['RouteTriggerInput']['return']
         return self._defaults['RouteTriggerInput']['return']
 
     def niSwitch_SendSoftwareTrigger(self, vi):  # noqa: N802
-        if self._defaults['SendSoftwareTrigger']['return'] != 0:
-            return self._defaults['SendSoftwareTrigger']['return']
         return self._defaults['SendSoftwareTrigger']['return']
 
     def niSwitch_SetAttributeViBoolean(self, vi, channel_name, attribute_id, attribute_value):  # noqa: N802
-        if self._defaults['SetAttributeViBoolean']['return'] != 0:
-            return self._defaults['SetAttributeViBoolean']['return']
         return self._defaults['SetAttributeViBoolean']['return']
 
     def niSwitch_SetAttributeViInt32(self, vi, channel_name, attribute_id, attribute_value):  # noqa: N802
-        if self._defaults['SetAttributeViInt32']['return'] != 0:
-            return self._defaults['SetAttributeViInt32']['return']
         return self._defaults['SetAttributeViInt32']['return']
 
     def niSwitch_SetAttributeViReal64(self, vi, channel_name, attribute_id, attribute_value):  # noqa: N802
-        if self._defaults['SetAttributeViReal64']['return'] != 0:
-            return self._defaults['SetAttributeViReal64']['return']
         return self._defaults['SetAttributeViReal64']['return']
 
     def niSwitch_SetAttributeViString(self, vi, channel_name, attribute_id, attribute_value):  # noqa: N802
-        if self._defaults['SetAttributeViString']['return'] != 0:
-            return self._defaults['SetAttributeViString']['return']
         return self._defaults['SetAttributeViString']['return']
 
     def niSwitch_SetPath(self, vi, path_list):  # noqa: N802
-        if self._defaults['SetPath']['return'] != 0:
-            return self._defaults['SetPath']['return']
         return self._defaults['SetPath']['return']
 
     def niSwitch_UnlockSession(self, vi, caller_has_lock):  # noqa: N802
@@ -360,18 +269,12 @@ class SideEffectsHelper(object):
         return self._defaults['UnlockSession']['return']
 
     def niSwitch_WaitForDebounce(self, vi, maximum_time_ms):  # noqa: N802
-        if self._defaults['WaitForDebounce']['return'] != 0:
-            return self._defaults['WaitForDebounce']['return']
         return self._defaults['WaitForDebounce']['return']
 
     def niSwitch_WaitForScanComplete(self, vi, maximum_time_ms):  # noqa: N802
-        if self._defaults['WaitForScanComplete']['return'] != 0:
-            return self._defaults['WaitForScanComplete']['return']
         return self._defaults['WaitForScanComplete']['return']
 
     def niSwitch_close(self, vi):  # noqa: N802
-        if self._defaults['close']['return'] != 0:
-            return self._defaults['close']['return']
         return self._defaults['close']['return']
 
     def niSwitch_error_message(self, vi, error_code, error_message):  # noqa: N802
@@ -389,8 +292,6 @@ class SideEffectsHelper(object):
         return self._defaults['error_message']['return']
 
     def niSwitch_reset(self, vi):  # noqa: N802
-        if self._defaults['reset']['return'] != 0:
-            return self._defaults['reset']['return']
         return self._defaults['reset']['return']
 
     def niSwitch_self_test(self, vi, self_test_result, self_test_message):  # noqa: N802

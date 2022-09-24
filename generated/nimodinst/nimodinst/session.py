@@ -77,7 +77,7 @@ class _Device(object):
         '''
         The socket number on which the device has been enumerated
         '''
-        self._param_list = 'owner=' + pp.pformat(owner) + ', index=' + pp.pformat(index)
+        self._param_list = f'owner={pp.pformat(owner)}, index={pp.pformat(index)}'
         self._is_frozen = True
 
     def __repr__(self):
@@ -85,15 +85,23 @@ class _Device(object):
 
     def __str__(self):
         ret_str = self.__repr__() + ':\n'
-        ret_str += '    bus_number = ' + pp.pformat(self.bus_number) + '\n'
-        ret_str += '    chassis_number = ' + pp.pformat(self.chassis_number) + '\n'
-        ret_str += '    device_model = ' + pp.pformat(self.device_model) + '\n'
-        ret_str += '    device_name = ' + pp.pformat(self.device_name) + '\n'
-        ret_str += '    max_pciexpress_link_width = ' + pp.pformat(self.max_pciexpress_link_width) + '\n'
-        ret_str += '    pciexpress_link_width = ' + pp.pformat(self.pciexpress_link_width) + '\n'
-        ret_str += '    serial_number = ' + pp.pformat(self.serial_number) + '\n'
-        ret_str += '    slot_number = ' + pp.pformat(self.slot_number) + '\n'
-        ret_str += '    socket_number = ' + pp.pformat(self.socket_number) + '\n'
+        ret_str += f'    bus_number = {pp.pformat(self.bus_number)}' + '\n'
+        ret_str += f'    chassis_number = {pp.pformat(self.chassis_number)}' + '\n'
+        ret_str += f'    device_model = {pp.pformat(self.device_model)}' + '\n'
+        ret_str += f'    device_name = {pp.pformat(self.device_name)}' + '\n'
+        ret_str += (
+            f'    max_pciexpress_link_width = {pp.pformat(self.max_pciexpress_link_width)}'
+            + '\n'
+        )
+
+        ret_str += (
+            f'    pciexpress_link_width = {pp.pformat(self.pciexpress_link_width)}'
+            + '\n'
+        )
+
+        ret_str += f'    serial_number = {pp.pformat(self.serial_number)}' + '\n'
+        ret_str += f'    slot_number = {pp.pformat(self.slot_number)}' + '\n'
+        ret_str += f'    socket_number = {pp.pformat(self.socket_number)}' + '\n'
         return ret_str
 
     def __getattribute__(self, name):
@@ -113,16 +121,15 @@ class _DeviceIterable(object):
         self._current_index = 0
         self._owner = owner
         self._count = count
-        self._param_list = 'owner=' + pp.pformat(owner) + ', count=' + pp.pformat(count)
+        self._param_list = f'owner={pp.pformat(owner)}, count={pp.pformat(count)}'
         self._is_frozen = True
 
     def _get_next(self):
         if self._current_index + 1 > self._count:
             raise StopIteration
-        else:
-            dev = _Device(self._owner, self._current_index)
-            self._current_index += 1
-            return dev
+        dev = _Device(self._owner, self._current_index)
+        self._current_index += 1
+        return dev
 
     def next(self):
         return self._get_next()
@@ -152,12 +159,9 @@ class Session(object):
         self._encoding = 'windows-1251'
         self._library = _library_singleton.get()
         self._handle, self._item_count = self._open_installed_devices_session(driver)
-        self._param_list = "driver=" + pp.pformat(driver)
+        self._param_list = f"driver={pp.pformat(driver)}"
 
-        self.devices = []
-        for i in range(self._item_count):
-            self.devices.append(_Device(self, i))
-
+        self.devices = [_Device(self, i) for i in range(self._item_count)]
         self._is_frozen = True
 
     def __repr__(self):

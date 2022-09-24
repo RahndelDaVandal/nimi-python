@@ -266,9 +266,7 @@ def find_enum_by_value(enums, value, start_enum=None):
                 enum.append(e)
                 values.append(v)
 
-    if len(enum) == 0 or len(enum) > 1:
-        return None, None
-    return enum[0], values[0]
+    return (None, None) if not enum or len(enum) > 1 else (enum[0], values[0])
 
 
 def _replace_enum_python_name(e_match):
@@ -301,9 +299,7 @@ def find_attribute_by_name(attributes, name):
     '''
     attr = [attributes[x] for x in attributes if attributes[x]['name'] == name]
     assert len(attr) <= 1, '{0} attributes with name {1}. No more than one is allowed'.format(len(attr), name)
-    if len(attr) == 0:
-        return None
-    return attr[0]
+    return attr[0] if attr else None
 
 
 def _replace_attribute_python_name(a_match):
@@ -318,17 +314,15 @@ def _replace_attribute_python_name(a_match):
     aname = "Unknown"
     if a_match:
         aname = a_match.group(1).replace('\\', '')
-        attr = find_attribute_by_name(config['attributes'], aname)
-        if attr:
+        if attr := find_attribute_by_name(config['attributes'], aname):
             aname = attr['name'].lower()
 
-    if config['make_link']:
-        if config['module_name'] == 'nitclk':
-            return ':py:attr:`{0}.SessionReference.{1}`'.format(config['module_name'], aname)
-        else:
-            return ':py:attr:`{0}.Session.{1}`'.format(config['module_name'], aname)
-    else:
+    if not config['make_link']:
         return '{0}'.format(aname)
+    if config['module_name'] == 'nitclk':
+        return ':py:attr:`{0}.SessionReference.{1}`'.format(config['module_name'], aname)
+    else:
+        return ':py:attr:`{0}.Session.{1}`'.format(config['module_name'], aname)
 
 
 def _replace_func_python_name(f_match):
@@ -354,13 +348,12 @@ def _replace_func_python_name(f_match):
         print('Unknown function name: {0}'.format(f_match.group(1)))
         print(config['functions'])
 
-    if config['make_link']:
-        if config['module_name'] == 'nitclk':
-            return ':py:func:`{0}.{1}`'.format(config['module_name'], fname)
-        else:
-            return ':py:meth:`{0}.Session.{1}`'.format(config['module_name'], fname)
-    else:
+    if not config['make_link']:
         return '{0}'.format(fname)
+    if config['module_name'] == 'nitclk':
+        return ':py:func:`{0}.{1}`'.format(config['module_name'], fname)
+    else:
+        return ':py:meth:`{0}.Session.{1}`'.format(config['module_name'], fname)
 
 
 def _replace_urls(u_match):
@@ -372,14 +365,12 @@ def _replace_urls(u_match):
     Returns:
         str: replacement url
     '''
-    if config['make_link']:
-        pages = u_match.group(1)
-        pages_list = pages.split(',')
-        url_template = config['driver_urls'][config['url_key']]
-        url = url_template.format(*pages_list)
-        return url
-    else:
+    if not config['make_link']:
         return u_match.group(1)
+    pages = u_match.group(1)
+    pages_list = pages.split(',')
+    url_template = config['driver_urls'][config['url_key']]
+    return url_template.format(*pages_list)
 
 
 def _fix_references(node, doc, cfg, make_link=False):
@@ -463,7 +454,7 @@ def format_type_for_rst_documentation(param, numpy, config):
         elif param['is_buffer'] is True and numpy is True:
             p_type = 'numpy.array(dtype=numpy.{0})'.format(get_numpy_type_for_api_type(param['type'], config))
         elif param['use_list'] is True:
-            p_type = 'list of ' + p_type
+            p_type = f'list of {p_type}'
         elif param['use_array'] is True:
             p_type = 'array.array("{0}")'.format(get_array_type_for_api_type(param['type']))
 
@@ -495,7 +486,7 @@ def get_function_rst(function, method_template, numpy, config, indent=0, method_
         function['documentation']['tip'] = rep_cap_method_desc.format(config['module_name'], function['repeated_capability_type'], function['python_name'])
 
     rst = '.. py:{0}:: {1}{2}('.format(method_or_function, function['python_name'], suffix)
-    rst += get_params_snippet(function, session_method) + ')'
+    rst += f'{get_params_snippet(function, session_method)})'
     indent += 4
     rst += get_documentation_for_node_rst(function, config, indent)
 
@@ -541,7 +532,7 @@ def _format_type_for_docstring(param, numpy, config):
         elif param['is_buffer'] is True and numpy is True:
             p_type = 'numpy.array(dtype=numpy.{0})'.format(get_numpy_type_for_api_type(param['type'], config))
         elif param['use_list'] is True:
-            p_type = 'list of ' + p_type
+            p_type = f'list of {p_type}'
         elif param['use_array'] is True:
             p_type = 'array.array("{0}")'.format(get_array_type_for_api_type(param['type']))
 
@@ -578,7 +569,7 @@ def get_function_docstring(function, numpy, config, indent=0):
         docstring += '\n' + (' ' * (indent + 4)) + '{0} ({1}):'.format(p['python_name'], _format_type_for_docstring(p, numpy, config))
         ds = get_documentation_for_node_docstring(p, config, indent + 8)
         if len(ds) > 0:
-            docstring += ' ' + ds
+            docstring += f' {ds}'
         docstring += '\n'
 
     output_params = filter_parameters(function, output_parameters)
@@ -588,7 +579,7 @@ def get_function_docstring(function, numpy, config, indent=0):
             docstring += '\n' + (' ' * (indent + 4)) + '{0} ({1}):'.format(p['python_name'], _format_type_for_docstring(p, numpy, config))
             ds = get_documentation_for_node_docstring(p, config, indent + 8)
             if len(ds) > 0:
-                docstring += ' ' + ds
+                docstring += f' {ds}'
             docstring += '\n'
 
     return docstring
@@ -618,8 +609,7 @@ def as_rest_table(data, header=True):
     | ipsum |                89798 |    0.2 |
     +-------+----------------------+--------+
     """
-    data = data if data else [['No Data']]
-    table = []
+    data = data or [['No Data']]
     # max size of each column
     sizes = map(max, zip(*[[len(str(elt)) for elt in member] for member in data]))
     if sys.version_info.major >= 3:
@@ -650,23 +640,16 @@ def as_rest_table(data, header=True):
     line_marker = line_marker.translate(th_separator_tr)
     vertical_separator = vertical_separator.translate(th_separator_tr)
     end_of_line = end_of_line.translate(th_separator_tr)
-    th_separator = '{0}{1}{2}'.format(start_of_line, vertical_separator.join([x * line_marker for x in sizes]), end_of_line)
-    # prepare result
-    table.append(separator)
-    # set table header
-    titles = data[0]
-    table.append(template.format(*titles))
-
+    table = [separator, template.format(*data[0])]
     if header:
+        th_separator = '{0}{1}{2}'.format(start_of_line, vertical_separator.join([x * line_marker for x in sizes]), end_of_line)
         table.append(th_separator)
     else:
         table.append(separator)
 
     for d in data[1:-1]:
-        table.append(template.format(*d))
-        table.append(separator)
-    table.append(template.format(*data[-1]))
-    table.append(separator)
+        table.extend((template.format(*d), separator))
+    table.extend((template.format(*data[-1]), separator))
     return '\n'.join(table)
 
 
@@ -680,12 +663,9 @@ def _square_up_table(nd):
     if 'table_header' not in nd and 'table_body' not in nd:
         return  # We don't need to do anything
 
-    # First we get max length
-    max_len = 0
     table_header = nd['table_header'] if 'table_header' in nd else None
     table_body = nd['table_body']
-    if table_header:
-        max_len = len(table_header)
+    max_len = len(table_header) if table_header else 0
     for line in table_body:
         if len(line) > max_len:
             max_len = len(line)
@@ -867,26 +847,31 @@ def add_notes_re_links(config):
 
 def get_attribute_repeated_caps(attr):
     '''Creates a comma-separated string representing the attribute's repeated capabilities. Returns 'None' if there are no repeated capabilities'''
-    if 'supported_rep_caps' in attr and len(attr['supported_rep_caps']) > 0:
-        supported_rep_caps = attr['supported_rep_caps']
-        caps = ', '.join(supported_rep_caps)
-    else:
-        caps = 'None'
-    return caps
+    if (
+        'supported_rep_caps' not in attr
+        or len(attr['supported_rep_caps']) <= 0
+    ):
+        return 'None'
+    supported_rep_caps = attr['supported_rep_caps']
+    return ', '.join(supported_rep_caps)
 
 
 def get_attribute_repeated_caps_with_conjunction(attr):
     '''Creates a comma-separated string, with terminating 'and', representing the attribute's repeated capabilities. Returns 'None' if there are no repeated capabilities'''
-    if 'supported_rep_caps' in attr and len(attr['supported_rep_caps']) > 0:
-        supported_rep_caps = attr['supported_rep_caps']
-        num_items = len(supported_rep_caps)
-        if num_items > 1:
-            caps = ', '.join(supported_rep_caps[:-1]) + ' or ' + supported_rep_caps[num_items - 1]
-        else:
-            caps = supported_rep_caps[0]
-    else:
-        caps = 'None'
-    return caps
+    if (
+        'supported_rep_caps' not in attr
+        or len(attr['supported_rep_caps']) <= 0
+    ):
+        return 'None'
+    supported_rep_caps = attr['supported_rep_caps']
+    num_items = len(supported_rep_caps)
+    return (
+        ', '.join(supported_rep_caps[:-1])
+        + ' or '
+        + supported_rep_caps[num_items - 1]
+        if num_items > 1
+        else supported_rep_caps[0]
+    )
 
 
 def module_supports_repeated_caps(config):

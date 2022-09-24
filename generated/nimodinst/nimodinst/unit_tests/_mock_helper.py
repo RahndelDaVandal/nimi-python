@@ -15,22 +15,24 @@ class MockFunctionCallError(Exception):
 
 class SideEffectsHelper(object):
     def __init__(self):
-        self._defaults = {}
-        self._defaults['CloseInstalledDevicesSession'] = {}
+        self._defaults = {'CloseInstalledDevicesSession': {}}
         self._defaults['CloseInstalledDevicesSession']['return'] = 0
-        self._defaults['GetExtendedErrorInfo'] = {}
-        self._defaults['GetExtendedErrorInfo']['return'] = 0
-        self._defaults['GetExtendedErrorInfo']['errorInfo'] = None
-        self._defaults['GetInstalledDeviceAttributeViInt32'] = {}
-        self._defaults['GetInstalledDeviceAttributeViInt32']['return'] = 0
-        self._defaults['GetInstalledDeviceAttributeViInt32']['attributeValue'] = None
-        self._defaults['GetInstalledDeviceAttributeViString'] = {}
-        self._defaults['GetInstalledDeviceAttributeViString']['return'] = 0
-        self._defaults['GetInstalledDeviceAttributeViString']['attributeValue'] = None
-        self._defaults['OpenInstalledDevicesSession'] = {}
-        self._defaults['OpenInstalledDevicesSession']['return'] = 0
-        self._defaults['OpenInstalledDevicesSession']['handle'] = None
-        self._defaults['OpenInstalledDevicesSession']['deviceCount'] = None
+        self._defaults['GetExtendedErrorInfo'] = {'return': 0, 'errorInfo': None}
+        self._defaults['GetInstalledDeviceAttributeViInt32'] = {
+            'return': 0,
+            'attributeValue': None,
+        }
+
+        self._defaults['GetInstalledDeviceAttributeViString'] = {
+            'return': 0,
+            'attributeValue': None,
+        }
+
+        self._defaults['OpenInstalledDevicesSession'] = {
+            'return': 0,
+            'handle': None,
+            'deviceCount': None,
+        }
 
     def __getitem__(self, func):
         return self._defaults[func]
@@ -39,8 +41,6 @@ class SideEffectsHelper(object):
         self._defaults[func] = val
 
     def niModInst_CloseInstalledDevicesSession(self, handle):  # noqa: N802
-        if self._defaults['CloseInstalledDevicesSession']['return'] != 0:
-            return self._defaults['CloseInstalledDevicesSession']['return']
         return self._defaults['CloseInstalledDevicesSession']['return']
 
     def niModInst_GetExtendedErrorInfo(self, error_info_buffer_size, error_info):  # noqa: N802

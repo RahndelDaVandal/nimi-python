@@ -25,7 +25,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -42,14 +42,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _Acquisition(object):
@@ -524,11 +524,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Finally, set _is_frozen to True which is used to prevent clients from accidentally adding
@@ -1205,10 +1207,9 @@ class Session(_SessionBase):
         self._vi = self._init_with_options(resource_name, id_query, reset_device, options)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("resource_name=" + pp.pformat(resource_name))
-        param_list.append("reset_device=" + pp.pformat(reset_device))
-        param_list.append("options=" + pp.pformat(options))
+        param_list = [f"resource_name={pp.pformat(resource_name)}"]
+        param_list.append(f"reset_device={pp.pformat(reset_device)}")
+        param_list.append(f"options={pp.pformat(options)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -1331,7 +1332,10 @@ class Session(_SessionBase):
 
         '''
         if type(measurement_function) is not enums.Function:
-            raise TypeError('Parameter measurement_function must be of type ' + str(enums.Function))
+            raise TypeError(
+                f'Parameter measurement_function must be of type {str(enums.Function)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         measurement_function_ctype = _visatype.ViInt32(measurement_function.value)  # case S130
         range_ctype = _visatype.ViReal64(range)  # case S150
@@ -1399,7 +1403,10 @@ class Session(_SessionBase):
 
         '''
         if type(measurement_function) is not enums.Function:
-            raise TypeError('Parameter measurement_function must be of type ' + str(enums.Function))
+            raise TypeError(
+                f'Parameter measurement_function must be of type {str(enums.Function)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         measurement_function_ctype = _visatype.ViInt32(measurement_function.value)  # case S130
         range_ctype = _visatype.ViReal64(range)  # case S150
@@ -1458,7 +1465,10 @@ class Session(_SessionBase):
 
         '''
         if type(sample_trigger) is not enums.SampleTrigger:
-            raise TypeError('Parameter sample_trigger must be of type ' + str(enums.SampleTrigger))
+            raise TypeError(
+                f'Parameter sample_trigger must be of type {str(enums.SampleTrigger)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_count_ctype = _visatype.ViInt32(trigger_count)  # case S150
         sample_count_ctype = _visatype.ViInt32(sample_count)  # case S150
@@ -1532,7 +1542,7 @@ class Session(_SessionBase):
 
         '''
         if type(rtd_type) is not enums.RTDType:
-            raise TypeError('Parameter rtd_type must be of type ' + str(enums.RTDType))
+            raise TypeError(f'Parameter rtd_type must be of type {str(enums.RTDType)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         rtd_type_ctype = _visatype.ViInt32(rtd_type.value)  # case S130
         rtd_resistance_ctype = _visatype.ViReal64(rtd_resistance)  # case S150
@@ -1617,9 +1627,15 @@ class Session(_SessionBase):
 
         '''
         if type(thermocouple_type) is not enums.ThermocoupleType:
-            raise TypeError('Parameter thermocouple_type must be of type ' + str(enums.ThermocoupleType))
+            raise TypeError(
+                f'Parameter thermocouple_type must be of type {str(enums.ThermocoupleType)}'
+            )
+
         if type(reference_junction_type) is not enums.ThermocoupleReferenceJunctionType:
-            raise TypeError('Parameter reference_junction_type must be of type ' + str(enums.ThermocoupleReferenceJunctionType))
+            raise TypeError(
+                f'Parameter reference_junction_type must be of type {str(enums.ThermocoupleReferenceJunctionType)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         thermocouple_type_ctype = _visatype.ViInt32(thermocouple_type.value)  # case S130
         reference_junction_type_ctype = _visatype.ViInt32(reference_junction_type.value)  # case S130
@@ -1665,7 +1681,10 @@ class Session(_SessionBase):
 
         '''
         if type(trigger_source) is not enums.TriggerSource:
-            raise TypeError('Parameter trigger_source must be of type ' + str(enums.TriggerSource))
+            raise TypeError(
+                f'Parameter trigger_source must be of type {str(enums.TriggerSource)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_source_ctype = _visatype.ViInt32(trigger_source.value)  # case S130
         trigger_delay_ctype = _converters.convert_timedelta_to_seconds_real64(trigger_delay)  # case S140
@@ -1719,7 +1738,10 @@ class Session(_SessionBase):
 
         '''
         if type(measurement_function) is not enums.Function:
-            raise TypeError('Parameter measurement_function must be of type ' + str(enums.Function))
+            raise TypeError(
+                f'Parameter measurement_function must be of type {str(enums.Function)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         measurement_function_ctype = _visatype.ViInt32(measurement_function.value)  # case S130
         range_ctype = _visatype.ViReal64(range)  # case S150
@@ -2030,7 +2052,10 @@ class Session(_SessionBase):
         if numpy.isfortran(waveform_array) is True:
             raise TypeError('waveform_array must be in C-order')
         if waveform_array.dtype is not numpy.dtype('float64'):
-            raise TypeError('waveform_array must be numpy.ndarray of dtype=float64, is ' + str(waveform_array.dtype))
+            raise TypeError(
+                f'waveform_array must be numpy.ndarray of dtype=float64, is {str(waveform_array.dtype)}'
+            )
+
         array_size = len(waveform_array)
 
         vi_ctype = _visatype.ViSession(self._vi)  # case S110

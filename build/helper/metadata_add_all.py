@@ -52,7 +52,7 @@ def _add_python_method_name(function, name):
     '''Adds a python_name' key/value pair to the function metadata if not already specified'''
     if 'python_name' not in function:
         if function['codegen_method'] == 'private':
-            function['python_name'] = '_' + camelcase_to_snakecase(name)
+            function['python_name'] = f'_{camelcase_to_snakecase(name)}'
         else:
             function['python_name'] = camelcase_to_snakecase(name)
             assert function['codegen_method'] == 'no' or 'method_name_for_documentation' not in function, "'method_name_for_documentation' not allowed to be set: function['method_name_for_documentation'] = '{0}', function['python_name'] = '{1}'".format(function['method_name_for_documentation'], function['python_name'])
@@ -92,15 +92,15 @@ def _add_ctypes_variable_name(parameter):
 def _add_ctypes_type(parameter, config):
     '''Adds a ctypes_type key/value pair to the parameter metadata for calling into the library'''
     parameter['ctypes_type'] = parameter['type']
-    module_name = ''
     custom_type = find_custom_type(parameter, config)
-    if custom_type is not None:
-        module_name = custom_type['file_name'] + '.'
-
+    module_name = custom_type['file_name'] + '.' if custom_type is not None else ''
     if parameter['is_string']:
         parameter['ctypes_type_library_call'] = 'ctypes.POINTER(ViChar)'
     elif parameter['direction'] == 'out' or parameter['is_buffer'] is True:
-        parameter['ctypes_type_library_call'] = "ctypes.POINTER(" + module_name + parameter['ctypes_type'] + ")"
+        parameter['ctypes_type_library_call'] = (
+            f"ctypes.POINTER({module_name}" + parameter['ctypes_type'] + ")"
+        )
+
     else:
         parameter['ctypes_type_library_call'] = module_name + parameter['ctypes_type']
 
@@ -121,8 +121,7 @@ def _add_numpy_info(parameter, parameters, config):
         parameter['numpy_type'] = get_numpy_type_for_api_type(parameter['type'], config)
 
         if parameter['size']['mechanism'] == 'passed-in':
-            size_param = find_size_parameter(parameter, parameters)
-            if size_param:
+            if size_param := find_size_parameter(parameter, parameters):
                 size_param['use_in_python_api'] = False
 
     return parameter
@@ -315,7 +314,7 @@ def _add_use_in_python_api(p, parameters):
     if 'use_in_python_api' not in p:
         p['use_in_python_api'] = True
 
-    if p['size']['mechanism'] == 'len' or p['size']['mechanism'] == 'ivi-dance':
+    if p['size']['mechanism'] in ['len', 'ivi-dance']:
         size_param = find_size_parameter(p, parameters)
         size_param['use_in_python_api'] = False
 
@@ -350,12 +349,8 @@ def _setup_init_function(functions, config):
 
         functions['_init_function'] = init_function
     except KeyError:
-        if 'init_function' not in config or config['init_function'] is None:
-            # We don't have an init function or it is set to None (same thing) so we can't
-            # do anything here
-            pass
-        else:
-            print("Couldn't find {} init function".format(config['init_function']))
+        if 'init_function' in config and config['init_function'] is not None:
+            print(f"Couldn't find {config['init_function']} init function")
 
 
 def add_all_function_metadata(functions, config):
@@ -408,7 +403,7 @@ def _add_python_name(a, attributes):
     if 'python_name' not in attributes[a]:
         n = attributes[a]['name'].lower()
         if attributes[a]['codegen_method'] == 'private':
-            n = '_' + n
+            n = f'_{n}'
 
         attributes[a]['python_name'] = n
 
@@ -457,12 +452,21 @@ def _add_enum_codegen_method(enums, config):
     enum_to_client_functions = _get_functions_that_use_enums(enums, config)
     enum_to_client_attributes = _get_attributes_that_use_enums(enums, config)
     for e in enums:
-        least_restrictive_codegen_method = _get_least_restrictive_codegen_method(
-            set.union(
-                set(config['functions'][f]['codegen_method'] for f in enum_to_client_functions[e]),
-                set(config['attributes'][a]['codegen_method'] for a in enum_to_client_attributes[e])
+        least_restrictive_codegen_method = (
+            _get_least_restrictive_codegen_method(
+                set.union(
+                    {
+                        config['functions'][f]['codegen_method']
+                        for f in enum_to_client_functions[e]
+                    },
+                    {
+                        config['attributes'][a]['codegen_method']
+                        for a in enum_to_client_attributes[e]
+                    },
+                )
             )
         )
+
         if 'codegen_method' not in enums[e]:
             enums[e]['codegen_method'] = least_restrictive_codegen_method
         else:
@@ -581,7 +585,7 @@ def _add_enum_value_python_name(enum_info, config):
 
     # We only remove the suffix if there is one.
     # '_' only means the name starts with a number
-    if len(suffix) > 0:
+    if suffix != "":
         for v in enum_info['values']:
             assert v['python_name'].endswith(suffix), '{0} does not end with {1}'.format(v['name'], suffix)
             v['suffix'] = suffix
@@ -591,7 +595,7 @@ def _add_enum_value_python_name(enum_info, config):
     # If we are not going to code generate this enum, we don't care about this
     for v in enum_info['values']:
         if enum_info['codegen_method'] != 'no' and v['python_name'][0].isdigit():
-            raise ValueError('Invalid name: {}'.format(v['python_name']))  # pragma: no cover
+            raise ValueError(f"Invalid name: {v['python_name']}")
 
     return enum_info
 
@@ -615,10 +619,13 @@ def fixup_enum_names(config):
     # Check all attributes that will be code generated
     for a in config['attributes']:
         attr = config['attributes'][a]
-        if attr['codegen_method'] != 'no':
-            if attr['enum'] is not None and config['enums'][attr['enum']]['codegen_method'] == 'private':
-                # We need to update the python type since the enum is private
-                attr['python_type'] = 'enums.' + config['enums'][attr['enum']]['python_name']
+        if (
+            attr['codegen_method'] != 'no'
+            and attr['enum'] is not None
+            and config['enums'][attr['enum']]['codegen_method'] == 'private'
+        ):
+            # We need to update the python type since the enum is private
+            attr['python_type'] = 'enums.' + config['enums'][attr['enum']]['python_name']
 
 
 def add_all_enum_metadata(enums, config):

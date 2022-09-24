@@ -69,17 +69,17 @@ class _BufferMatcher(object):
             except AttributeError:
                 pass
 
-            # Because of object lifetimes, we may need to mock the other instance and provide lists instead of the actual array
-            if not isinstance(other, self.expected_type) and not isinstance(other, list):
-                print("Unexpected type. Expected: {0} or {1}. Received: {2}".format(self.expected_type, list, type(other)))
-                return False
+        # Because of object lifetimes, we may need to mock the other instance and provide lists instead of the actual array
+        if not isinstance(other, self.expected_type) and not isinstance(other, list):
+            print("Unexpected type. Expected: {0} or {1}. Received: {2}".format(self.expected_type, list, type(other)))
+            return False
         if self.expected_size != len(other):
             print("Unexpected length. Expected: {0}. Received: {1}".format(self.expected_size, len(other)))
             return False
         if self.expected_value is not None:
             # Can't compare the objects directly because they're different types (one is list, another is ctypes array).
             # Go element by element, which allows for reporting the first index where different values were found.
-            for i in range(0, len(self.expected_value)):
+            for i in range(len(self.expected_value)):
                 if self.expected_value[i] != other[i]:
                     print("Unexpected value at index {0}. Expected: {1}. Received: {2}".format(i, self.expected_value[i], other[i]))
                     return False
@@ -90,9 +90,9 @@ class _BufferMatcher(object):
 
     def __str__(self):
         ret_str = self.__repr__() + '\n'
-        ret_str += '    expected_type  = ' + str(self.expected_type) + '\n'
-        ret_str += '    expected_value = ' + str(self.expected_value) + '\n'
-        ret_str += '    expected_size  = ' + str(self.expected_size) + '\n'
+        ret_str += f'    expected_type  = {str(self.expected_type)}' + '\n'
+        ret_str += f'    expected_value = {str(self.expected_value)}' + '\n'
+        ret_str += f'    expected_size  = {str(self.expected_size)}' + '\n'
         return ret_str
 
 
@@ -111,9 +111,9 @@ class ViStringMatcher(object):
             except AttributeError:
                 pass
 
-            if not isinstance(other, ctypes.Array):
-                print("Unexpected type. Expected: {0}. Received: {1}".format(self.expected_type, type(other)))
-                return False
+        if not isinstance(other, ctypes.Array):
+            print("Unexpected type. Expected: {0}. Received: {1}".format(self.expected_type, type(other)))
+            return False
         if len(other) < len(self.expected_string_value) + 1:  # +1 for NULL terminating character
             print("Unexpected length in C string. Expected at least: {0}. Received {1}".format(len(other), len(self.expected_string_value) + 1))
             return False
@@ -190,8 +190,8 @@ class CustomTypeBufferMatcher(object):
 
     def __str__(self):
         ret_str = self.__repr__() + '\n'
-        ret_str += '    expected_type = ' + str(self.expected_type) + '\n'
-        ret_str += '    expected_size = ' + str(self.expected_size) + '\n'
+        ret_str += f'    expected_type = {str(self.expected_type)}' + '\n'
+        ret_str += f'    expected_size = {str(self.expected_size)}' + '\n'
         return ret_str
 
 

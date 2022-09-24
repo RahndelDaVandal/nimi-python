@@ -26,7 +26,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -43,14 +43,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _Generation(object):
@@ -1109,11 +1109,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Instantiate any repeated capability objects
@@ -1609,7 +1611,7 @@ class _SessionBase(object):
 
         '''
         if type(waveform) is not enums.Waveform:
-            raise TypeError('Parameter waveform must be of type ' + str(enums.Waveform))
+            raise TypeError(f'Parameter waveform must be of type {str(enums.Waveform)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_ctype = _visatype.ViInt32(waveform.value)  # case S130
@@ -1649,7 +1651,7 @@ class _SessionBase(object):
 
         '''
         # Check the type by using string comparison so that we don't import numpy unnecessarily.
-        if str(type(waveform_data_array)).find("'numpy.ndarray'") != -1:
+        if "'numpy.ndarray'" in str(type(waveform_data_array)):
             import numpy
             if waveform_data_array.dtype == numpy.float64:
                 return self._create_waveform_f64_numpy(waveform_data_array)
@@ -1768,7 +1770,10 @@ class _SessionBase(object):
         if numpy.isfortran(waveform_data_array) is True:
             raise TypeError('waveform_data_array must be in C-order')
         if waveform_data_array.dtype is not numpy.dtype('float64'):
-            raise TypeError('waveform_data_array must be numpy.ndarray of dtype=float64, is ' + str(waveform_data_array.dtype))
+            raise TypeError(
+                f'waveform_data_array must be numpy.ndarray of dtype=float64, is {str(waveform_data_array.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_size_ctype = _visatype.ViInt32(0 if waveform_data_array is None else len(waveform_data_array))  # case S160
@@ -1835,7 +1840,7 @@ class _SessionBase(object):
 
         '''
         if type(byte_order) is not enums.ByteOrder:
-            raise TypeError('Parameter byte_order must be of type ' + str(enums.ByteOrder))
+            raise TypeError(f'Parameter byte_order must be of type {str(enums.ByteOrder)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         file_name_ctype = ctypes.create_string_buffer(file_name.encode(self._encoding))  # case C020
@@ -1902,7 +1907,7 @@ class _SessionBase(object):
 
         '''
         if type(byte_order) is not enums.ByteOrder:
-            raise TypeError('Parameter byte_order must be of type ' + str(enums.ByteOrder))
+            raise TypeError(f'Parameter byte_order must be of type {str(enums.ByteOrder)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         file_name_ctype = ctypes.create_string_buffer(file_name.encode(self._encoding))  # case C020
@@ -1959,7 +1964,10 @@ class _SessionBase(object):
         if numpy.isfortran(waveform_data_array) is True:
             raise TypeError('waveform_data_array must be in C-order')
         if waveform_data_array.dtype is not numpy.dtype('int16'):
-            raise TypeError('waveform_data_array must be numpy.ndarray of dtype=int16, is ' + str(waveform_data_array.dtype))
+            raise TypeError(
+                f'waveform_data_array must be numpy.ndarray of dtype=int16, is {str(waveform_data_array.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_size_ctype = _visatype.ViInt32(0 if waveform_data_array is None else len(waveform_data_array))  # case S160
@@ -2447,14 +2455,8 @@ class _SessionBase(object):
                 trigger_id = "None"
                 trigger = enums.Trigger.START
 
-        elif trigger is not None and trigger_id is not None:
-            pass  # This is how the function should be called
-
-        else:
-            raise ValueError('Both trigger ({0}) and trigger_id ({1}) should be passed in to the method'.format(str(trigger), str(trigger_id)))
-
         if type(trigger) is not enums.Trigger:
-            raise TypeError('Parameter trigger must be of type ' + str(enums.Trigger))
+            raise TypeError(f'Parameter trigger must be of type {str(enums.Trigger)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_ctype = _visatype.ViInt32(trigger.value)  # case S130
         trigger_id_ctype = ctypes.create_string_buffer(trigger_id.encode(self._encoding))  # case C020
@@ -2747,7 +2749,10 @@ class _SessionBase(object):
 
         '''
         if type(relative_to) is not enums.RelativeTo:
-            raise TypeError('Parameter relative_to must be of type ' + str(enums.RelativeTo))
+            raise TypeError(
+                f'Parameter relative_to must be of type {str(enums.RelativeTo)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_name_ctype = ctypes.create_string_buffer(waveform_name.encode(self._encoding))  # case C020
@@ -2855,7 +2860,10 @@ class _SessionBase(object):
 
         '''
         if type(relative_to) is not enums.RelativeTo:
-            raise TypeError('Parameter relative_to must be of type ' + str(enums.RelativeTo))
+            raise TypeError(
+                f'Parameter relative_to must be of type {str(enums.RelativeTo)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_handle_ctype = _visatype.ViInt32(waveform_handle)  # case S150
@@ -2921,7 +2929,10 @@ class _SessionBase(object):
         if numpy.isfortran(data) is True:
             raise TypeError('data must be in C-order')
         if data.dtype is not numpy.dtype('int16'):
-            raise TypeError('data must be numpy.ndarray of dtype=int16, is ' + str(data.dtype))
+            raise TypeError(
+                f'data must be numpy.ndarray of dtype=int16, is {str(data.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_handle_ctype = _visatype.ViInt32(waveform_handle)  # case S150
@@ -3030,7 +3041,10 @@ class _SessionBase(object):
         if numpy.isfortran(data) is True:
             raise TypeError('data must be in C-order')
         if data.dtype is not numpy.dtype('float64'):
-            raise TypeError('data must be numpy.ndarray of dtype=float64, is ' + str(data.dtype))
+            raise TypeError(
+                f'data must be numpy.ndarray of dtype=float64, is {str(data.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_name_ctype = ctypes.create_string_buffer(waveform_name.encode(self._encoding))  # case C020
@@ -3080,7 +3094,10 @@ class _SessionBase(object):
         if numpy.isfortran(data) is True:
             raise TypeError('data must be in C-order')
         if data.dtype is not numpy.dtype('int16'):
-            raise TypeError('data must be numpy.ndarray of dtype=int16, is ' + str(data.dtype))
+            raise TypeError(
+                f'data must be numpy.ndarray of dtype=int16, is {str(data.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_name_ctype = ctypes.create_string_buffer(waveform_name.encode(self._encoding))  # case C020
@@ -3223,7 +3240,10 @@ class _SessionBase(object):
         if numpy.isfortran(data) is True:
             raise TypeError('data must be in C-order')
         if data.dtype is not numpy.dtype('float64'):
-            raise TypeError('data must be numpy.ndarray of dtype=float64, is ' + str(data.dtype))
+            raise TypeError(
+                f'data must be numpy.ndarray of dtype=float64, is {str(data.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         waveform_handle_ctype = _visatype.ViInt32(waveform_handle)  # case S150
@@ -3263,7 +3283,7 @@ class _SessionBase(object):
         '''
         use_named = isinstance(waveform_name_or_handle, str)
         # Check the type by using string comparison so that we don't import numpy unnecessarily.
-        if str(type(data)).find("'numpy.ndarray'") != -1:
+        if "'numpy.ndarray'" in str(type(data)):
             import numpy
             if data.dtype == numpy.float64:
                 return self._write_named_waveform_f64_numpy(waveform_name_or_handle, data) if use_named else self._write_waveform_numpy(waveform_name_or_handle, data)
@@ -3440,11 +3460,10 @@ class Session(_SessionBase):
         self.tclk = nitclk.SessionReference(self._vi)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("resource_name=" + pp.pformat(resource_name))
-        param_list.append("channel_name=" + pp.pformat(channel_name))
-        param_list.append("reset_device=" + pp.pformat(reset_device))
-        param_list.append("options=" + pp.pformat(options))
+        param_list = [f"resource_name={pp.pformat(resource_name)}"]
+        param_list.append(f"channel_name={pp.pformat(channel_name)}")
+        param_list.append(f"reset_device={pp.pformat(reset_device)}")
+        param_list.append(f"options={pp.pformat(options)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -3947,7 +3966,7 @@ class Session(_SessionBase):
 
         '''
         if type(waveform) is not enums.Waveform:
-            raise TypeError('Parameter waveform must be of type ' + str(enums.Waveform))
+            raise TypeError(f'Parameter waveform must be of type {str(enums.Waveform)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         waveform_ctype = _visatype.ViInt32(waveform.value)  # case S130
         frequency_list_length_ctype = _visatype.ViInt32(0 if frequency_array is None else len(frequency_array))  # case S160

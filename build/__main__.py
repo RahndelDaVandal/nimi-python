@@ -67,9 +67,7 @@ for m in args.metadata:
         logging.error('--dest-dir is required when using --template')
         sys.exit(1)
 
-    template_params = {}
-    template_params['metadata'] = metadata
-
+    template_params = {'metadata': metadata}
     logging.debug(pp.pformat(template_params))
 
     file_name = args.dest_file

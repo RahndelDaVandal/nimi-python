@@ -78,10 +78,7 @@ def _(repeated_capability, prefix):
             # Just return the repeated_capability string as-is in that case.
             pass
         else:
-            if end < start:
-                rng = range(start, end - 1, -1)
-            else:
-                rng = range(start, end + 1)
+            rng = range(start, end - 1, -1) if end < start else range(start, end + 1)
             return _convert_repeated_capabilities(rng, prefix)
 
     # If we made it here, it must be a simple item so we remove any prefix and return
@@ -260,39 +257,39 @@ def convert_month_to_timedelta(months):
 # call from init and is a special case.
 def convert_init_with_options_dictionary(values):
     if type(values) is str:
-        init_with_options_string = values
-    else:
-        good_keys = {
-            'rangecheck': 'RangeCheck',
-            'queryinstrstatus': 'QueryInstrStatus',
-            'cache': 'Cache',
-            'simulate': 'Simulate',
-            'recordcoercions': 'RecordCoercions',
-            'interchangecheck': 'InterchangeCheck',
-            'driversetup': 'DriverSetup',
-            'range_check': 'RangeCheck',
-            'query_instr_status': 'QueryInstrStatus',
-            'record_coercions': 'RecordCoercions',
-            'interchange_check': 'InterchangeCheck',
-            'driver_setup': 'DriverSetup',
-        }
-        init_with_options = []
-        for k in sorted(values.keys()):
-            value = None
-            if k.lower() in good_keys and not good_keys[k.lower()] == 'DriverSetup':
-                value = good_keys[k.lower()] + ('=1' if values[k] is True else '=0')
-            elif k.lower() in good_keys and good_keys[k.lower()] == 'DriverSetup':
-                if not isinstance(values[k], dict):
-                    raise TypeError('DriverSetup must be a dictionary')
-                value = 'DriverSetup=' + (';'.join([key + ':' + values[k][key] for key in sorted(values[k])]))
-            else:
-                value = k + ('=1' if values[k] is True else '=0')
+        return values
+    good_keys = {
+        'rangecheck': 'RangeCheck',
+        'queryinstrstatus': 'QueryInstrStatus',
+        'cache': 'Cache',
+        'simulate': 'Simulate',
+        'recordcoercions': 'RecordCoercions',
+        'interchangecheck': 'InterchangeCheck',
+        'driversetup': 'DriverSetup',
+        'range_check': 'RangeCheck',
+        'query_instr_status': 'QueryInstrStatus',
+        'record_coercions': 'RecordCoercions',
+        'interchange_check': 'InterchangeCheck',
+        'driver_setup': 'DriverSetup',
+    }
+    init_with_options = []
+    for k in sorted(values.keys()):
+        value = None
+        if k.lower() in good_keys and good_keys[k.lower()] != 'DriverSetup':
+            value = good_keys[k.lower()] + ('=1' if values[k] is True else '=0')
+        elif k.lower() in good_keys and good_keys[k.lower()] == 'DriverSetup':
+            if not isinstance(values[k], dict):
+                raise TypeError('DriverSetup must be a dictionary')
+            value = 'DriverSetup=' + ';'.join(
+                [f'{key}:{values[k][key]}' for key in sorted(values[k])]
+            )
 
-            init_with_options.append(value)
+        else:
+            value = k + ('=1' if values[k] is True else '=0')
 
-        init_with_options_string = ','.join(init_with_options)
+        init_with_options.append(value)
 
-    return init_with_options_string
+    return ','.join(init_with_options)
 
 
 # convert value to bytes

@@ -22,7 +22,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -39,14 +39,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _SessionBase(object):
@@ -64,11 +64,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Finally, set _is_frozen to True which is used to prevent clients from accidentally adding
@@ -249,9 +251,8 @@ class Session(_SessionBase):
         self._vi = self._open_session(virtual_device_name, options)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("virtual_device_name=" + pp.pformat(virtual_device_name))
-        param_list.append("options=" + pp.pformat(options))
+        param_list = [f"virtual_device_name={pp.pformat(virtual_device_name)}"]
+        param_list.append(f"options={pp.pformat(options)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -359,7 +360,10 @@ class Session(_SessionBase):
 
         '''
         if type(multiconnect_mode) is not enums.MulticonnectMode:
-            raise TypeError('Parameter multiconnect_mode must be of type ' + str(enums.MulticonnectMode))
+            raise TypeError(
+                f'Parameter multiconnect_mode must be of type {str(enums.MulticonnectMode)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         connect_spec_ctype = ctypes.create_string_buffer(connect_spec.encode(self._encoding))  # case C020
         multiconnect_mode_ctype = _visatype.ViInt32(multiconnect_mode.value)  # case S130
@@ -450,9 +454,15 @@ class Session(_SessionBase):
 
         '''
         if type(multiconnect_mode) is not enums.MulticonnectMode:
-            raise TypeError('Parameter multiconnect_mode must be of type ' + str(enums.MulticonnectMode))
+            raise TypeError(
+                f'Parameter multiconnect_mode must be of type {str(enums.MulticonnectMode)}'
+            )
+
         if type(operation_order) is not enums.OperationOrder:
-            raise TypeError('Parameter operation_order must be of type ' + str(enums.OperationOrder))
+            raise TypeError(
+                f'Parameter operation_order must be of type {str(enums.OperationOrder)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         connect_spec_ctype = ctypes.create_string_buffer(connect_spec.encode(self._encoding))  # case C020
         disconnect_spec_ctype = ctypes.create_string_buffer(disconnect_spec.encode(self._encoding))  # case C020
@@ -561,7 +571,10 @@ class Session(_SessionBase):
 
         '''
         if type(expand_action) is not enums.ExpandAction:
-            raise TypeError('Parameter expand_action must be of type ' + str(enums.ExpandAction))
+            raise TypeError(
+                f'Parameter expand_action must be of type {str(enums.ExpandAction)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         route_spec_ctype = ctypes.create_string_buffer(route_spec.encode(self._encoding))  # case C020
         expand_action_ctype = _visatype.ViInt32(expand_action.value)  # case S130

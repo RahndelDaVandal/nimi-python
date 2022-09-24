@@ -22,10 +22,7 @@ def test_populate_samples_info():
 
 
 def test_populate_channel_and_record_info():
-    waveform_infos = []
-    for i in range(6):
-        waveform_infos.append(niscope.waveform_info.WaveformInfo())
-
+    waveform_infos = [niscope.waveform_info.WaveformInfo() for _ in range(6)]
     channels = ["Dev1/4", "Dev2/2"]
     records = [0, 1, 2]
     niscope.waveform_info._populate_channel_and_record_info(waveform_infos, channels, records)

@@ -69,7 +69,10 @@ def get_params_snippet(function, parameter_usage_options):
     Get a parameter list snippet based on parameter_usage_options.
     '''
     if type(parameter_usage_options) is not ParameterUsageOptions:
-        raise TypeError('parameter_usage_options must be of type ' + str(ParameterUsageOptions))
+        raise TypeError(
+            f'parameter_usage_options must be of type {str(ParameterUsageOptions)}'
+        )
+
 
     options_to_use = _ParameterUsageOptionsSnippet[parameter_usage_options]
 
@@ -80,8 +83,7 @@ def get_params_snippet(function, parameter_usage_options):
         snippets.append('self')
 
     # Render based on options
-    for p in parameters_to_use:
-        snippets.append(p[options_to_use['name_to_use']])
+    snippets.extend(p[options_to_use['name_to_use']] for p in parameters_to_use)
     return ', '.join(snippets)
 
 
@@ -114,13 +116,19 @@ def _get_output_param_return_snippet(output_parameter, parameters, config):
             size_parameter = find_size_parameter(output_parameter, parameters)
             size = size_parameter['ctypes_variable_name'] + '.value'
 
-        snippet = '[' + return_type_snippet + output_parameter['ctypes_variable_name'] + '[i]) for i in range(' + size + ')]'
+        snippet = (
+            f'[{return_type_snippet}'
+            + output_parameter['ctypes_variable_name']
+            + '[i]) for i in range('
+            + size
+            + ')]'
+        )
+
+    elif output_parameter['is_string']:
+        # 'self._encoding' is a variable on the session object
+        snippet = output_parameter['ctypes_variable_name'] + '.value.decode(self._encoding)'
     else:
-        if output_parameter['is_string']:
-            # 'self._encoding' is a variable on the session object
-            snippet = output_parameter['ctypes_variable_name'] + '.value.decode(self._encoding)'
-        else:
-            snippet = return_type_snippet + output_parameter['ctypes_variable_name'] + val_suffix + ')'
+        snippet = return_type_snippet + output_parameter['ctypes_variable_name'] + val_suffix + ')'
 
     # Handle output converter
     if 'python_api_converter_name' in output_parameter:
@@ -132,12 +140,14 @@ def _get_output_param_return_snippet(output_parameter, parameters, config):
 # TODO(marcoskirsch): Retrofit to call filter_parameters(function, parameter_usage_options)
 def get_method_return_snippet(parameters, config, use_numpy_array=False):
     '''Returns a string suitable to use as the return argument of a Session method, i.e. "return reading_ctype.value"'''
-    snippets = []
-    for x in parameters:
-        if x['direction'] == 'out' or x['size']['mechanism'] == 'ivi-dance':
-            if x['numpy'] is False or use_numpy_array is False:
-                if x['use_in_python_api']:
-                    snippets.append(_get_output_param_return_snippet(x, parameters, config))
+    snippets = [
+        _get_output_param_return_snippet(x, parameters, config)
+        for x in parameters
+        if (x['direction'] == 'out' or x['size']['mechanism'] == 'ivi-dance')
+        and (x['numpy'] is False or use_numpy_array is False)
+        and x['use_in_python_api']
+    ]
+
     return ('return ' + ', '.join(snippets)).strip()
 
 
@@ -154,10 +164,14 @@ def _get_buffer_parameters_for_size_parameter(parameter, parameters):
     '''Return all parameters that use this parameter for size. Empty list if none'''
     buffer_params = []
     for p in parameters:
-        if (p['is_buffer'] or p['is_string']) and p['size']['value'] == parameter['name']:
-            buffer_params.append(p)
-        elif (p['is_buffer'] or p['is_string']) and 'value_twist' in p['size'] and p['size']['value_twist'] == parameter['name']:
-            buffer_params.append(p)
+        if (p['is_buffer'] or p['is_string']):
+            if p['size']['value'] == parameter['name']:
+                buffer_params.append(p)
+            elif (
+                'value_twist' in p['size']
+                and p['size']['value_twist'] == parameter['name']
+            ):
+                buffer_params.append(p)
     return buffer_params
 
 
@@ -191,13 +205,24 @@ def get_ctype_variable_declaration_snippet(parameter, parameters, ivi_dance_step
         module_name = '_visatype'
 
     if parameter['is_string'] is True:
-        definitions = _get_ctype_variable_definition_snippet_for_string(parameter, parameters, ivi_dance_step, module_name)
-    elif parameter['is_buffer'] is True:
-        definitions = _get_ctype_variable_definition_snippet_for_buffers(parameter, parameters, ivi_dance_step, use_numpy_array, custom_type, module_name)
-    else:
-        definitions = _get_ctype_variable_definition_snippet_for_scalar(parameter, parameters, ivi_dance_step, module_name, config)
+        return _get_ctype_variable_definition_snippet_for_string(
+            parameter, parameters, ivi_dance_step, module_name
+        )
 
-    return definitions
+    elif parameter['is_buffer'] is True:
+        return _get_ctype_variable_definition_snippet_for_buffers(
+            parameter,
+            parameters,
+            ivi_dance_step,
+            use_numpy_array,
+            custom_type,
+            module_name,
+        )
+
+    else:
+        return _get_ctype_variable_definition_snippet_for_scalar(
+            parameter, parameters, ivi_dance_step, module_name, config
+        )
 
 
 def _get_ctype_variable_definition_snippet_for_string(parameter, parameters, ivi_dance_step, module_name):
@@ -282,8 +307,8 @@ def _get_ctype_variable_definition_snippet_for_scalar(parameter, parameters, ivi
     Return Value (list): each item in the list will be one line needed for the declaration of that parameter
     '''
 
-    assert parameter['is_buffer'] is False, 'Parameter {}'.format(parameter)
-    assert parameter['numpy'] is False, 'Parameter {}'.format(parameter)
+    assert parameter['is_buffer'] is False, f'Parameter {parameter}'
+    assert parameter['numpy'] is False, f'Parameter {parameter}'
     corresponding_buffer_parameters = _get_buffer_parameters_for_size_parameter(parameter, parameters)
 
     definitions = []
@@ -300,42 +325,61 @@ def _get_ctype_variable_definition_snippet_for_scalar(parameter, parameters, ivi
             definition = '_converters.{0}({1})  # case S140'.format(parameter['python_api_converter_name'], parameter['python_name'])
         elif not corresponding_buffer_parameters:
             definition = '{0}.{1}({2})  # case S150'.format(module_name, parameter['ctypes_type'], parameter['python_name'])
-        elif corresponding_buffer_parameters and corresponding_buffer_parameters[0]['direction'] == 'in':  # We are only looking at the first one to see if it is 'in'. Assumes all are the same here, assert below if not
+        elif corresponding_buffer_parameters[0]['direction'] == 'in':  # We are only looking at the first one to see if it is 'in'. Assumes all are the same here, assert below if not
             # Parameter denotes the size of another (the "corresponding") parameter.
             definitions.append(parameter['ctypes_variable_name'] + ' = {0}.{1}(0 if {2} is None else len({2}))  # case S160'.format(module_name, parameter['ctypes_type'], corresponding_buffer_parameters[0]['python_name']))
             for i in range(1, len(corresponding_buffer_parameters)):
-                definitions.append('if {0} is not None and len({0}) != len({1}):  # case S160'.format(corresponding_buffer_parameters[i]['python_name'], corresponding_buffer_parameters[0]['python_name']))
-                definitions.append('    raise ValueError("Length of {0} and {1} parameters do not match.")  # case S160'.format(corresponding_buffer_parameters[i]['python_name'], corresponding_buffer_parameters[0]['python_name']))
-        else:
-            if corresponding_buffer_parameters[0]['size']['mechanism'] == 'ivi-dance':  # We are only looking at the first one. Assumes all are the same here, assert below if not
-                # Verify all corresponding_buffer_parameters are 'out' and 'ivi-dance'
-                for p in corresponding_buffer_parameters:
-                    assert p['direction'] == 'out'
-                    assert p['size']['mechanism'] == 'ivi-dance'
-                if ivi_dance_step == IviDanceStep.QUERY_SIZE:
-                    definition = '{0}.{1}()  # case S170'.format(module_name, parameter['ctypes_type'])
-                elif ivi_dance_step == IviDanceStep.GET_DATA:
-                    definition = '{0}.{1}(error_code)  # case S180'.format(module_name, parameter['ctypes_type'])
-                else:
-                    assert False, "ivi_dance_step {0} not valid for parameter {1} with ['size']['mechanism'] == 'ivi-dance'".format(ivi_dance_step, parameter['name'])
-            elif corresponding_buffer_parameters[0]['size']['mechanism'] == 'ivi-dance-with-a-twist':  # We are only looking at the first one. Assumes all are the same here, assert below if not
-                # Verify all corresponding_buffer_parameters are 'out' and 'ivi-dance-with-a-twist'
-                for p in corresponding_buffer_parameters:
-                    assert p['direction'] == 'out'
-                    assert p['size']['mechanism'] == 'ivi-dance-with-a-twist'
-                if ivi_dance_step == IviDanceStep.QUERY_SIZE:
-                    definition = '{0}.{1}(0)  # case S190'.format(module_name, parameter['ctypes_type'])
-                elif ivi_dance_step == IviDanceStep.GET_DATA:
-                    size_parameter_twist = find_size_parameter(corresponding_buffer_parameters[0], parameters, key='value_twist')
-                    definition = '{0}.{1}({2}.value)  # case S200'.format(module_name, parameter['ctypes_type'], size_parameter_twist['ctypes_variable_name'])
-                else:
-                    assert False, "ivi_dance_step {0} not valid for parameter {1} with ['size']['mechanism'] == 'ivi-dance-with-a-twist'".format(ivi_dance_step, parameter['name'])
+                definitions.extend(
+                    (
+                        'if {0} is not None and len({0}) != len({1}):  # case S160'.format(
+                            corresponding_buffer_parameters[i]['python_name'],
+                            corresponding_buffer_parameters[0]['python_name'],
+                        ),
+                        '    raise ValueError("Length of {0} and {1} parameters do not match.")  # case S160'.format(
+                            corresponding_buffer_parameters[i]['python_name'],
+                            corresponding_buffer_parameters[0]['python_name'],
+                        ),
+                    )
+                )
+
+        elif corresponding_buffer_parameters[0]['size']['mechanism'] == 'ivi-dance':  # We are only looking at the first one. Assumes all are the same here, assert below if not
+            # Verify all corresponding_buffer_parameters are 'out' and 'ivi-dance'
+            for p in corresponding_buffer_parameters:
+                assert p['direction'] == 'out'
+                assert p['size']['mechanism'] == 'ivi-dance'
+            if ivi_dance_step == IviDanceStep.QUERY_SIZE:
+                definition = '{0}.{1}()  # case S170'.format(module_name, parameter['ctypes_type'])
+            elif ivi_dance_step == IviDanceStep.GET_DATA:
+                definition = '{0}.{1}(error_code)  # case S180'.format(module_name, parameter['ctypes_type'])
             else:
+                assert False, "ivi_dance_step {0} not valid for parameter {1} with ['size']['mechanism'] == 'ivi-dance'".format(ivi_dance_step, parameter['name'])
+        elif corresponding_buffer_parameters[0]['size']['mechanism'] == 'ivi-dance-with-a-twist':  # We are only looking at the first one. Assumes all are the same here, assert below if not
+            # Verify all corresponding_buffer_parameters are 'out' and 'ivi-dance-with-a-twist'
+            for p in corresponding_buffer_parameters:
+                assert p['direction'] == 'out'
+                assert p['size']['mechanism'] == 'ivi-dance-with-a-twist'
+            if ivi_dance_step == IviDanceStep.QUERY_SIZE:
+                definition = '{0}.{1}(0)  # case S190'.format(module_name, parameter['ctypes_type'])
+            elif ivi_dance_step == IviDanceStep.GET_DATA:
+                size_parameter_twist = find_size_parameter(corresponding_buffer_parameters[0], parameters, key='value_twist')
+                definition = '{0}.{1}({2}.value)  # case S200'.format(module_name, parameter['ctypes_type'], size_parameter_twist['ctypes_variable_name'])
+            else:
+                assert False, "ivi_dance_step {0} not valid for parameter {1} with ['size']['mechanism'] == 'ivi-dance-with-a-twist'".format(ivi_dance_step, parameter['name'])
+        else:
                 # Verify all corresponding_buffer_parameters are 'out' and not 'fixed-size'
-                for p in corresponding_buffer_parameters:
-                    assert p['direction'] == 'out', 'Parameter direction not "out", Parameter: {}'.format(p['name'])
-                    assert p['size']['mechanism'] != 'fixed-size' and p['size']['mechanism'] != 'fixed-size', 'Parameter: {0}, Actual mechanism: {1}'.format(p['name'], p['size']['mechanism'])
-                definition = '{0}.{1}({2})  # case S210'.format(module_name, parameter['ctypes_type'], parameter['python_name'])
+            for p in corresponding_buffer_parameters:
+                assert (
+                    p['direction'] == 'out'
+                ), f"""Parameter direction not "out", Parameter: {p['name']}"""
+
+                assert p['size']['mechanism'] not in [
+                    'fixed-size',
+                    'fixed-size',
+                ], 'Parameter: {0}, Actual mechanism: {1}'.format(
+                    p['name'], p['size']['mechanism']
+                )
+
+            definition = '{0}.{1}({2})  # case S210'.format(module_name, parameter['ctypes_type'], parameter['python_name'])
     else:
         assert parameter['direction'] == 'out'
         definition = '{0}.{1}()  # case S220'.format(module_name, parameter['ctypes_type'])
@@ -373,32 +417,30 @@ def _get_ctype_variable_definition_snippet_for_buffers(parameter, parameters, iv
         definition = 'get_ctypes_pointer_for_buffer(value={0})  # case B510'.format(parameter['python_name'])
     elif parameter['direction'] == 'in' and 'python_api_converter_name' in parameter:
         if custom_type is not None:
-            assert False, 'Custom type {} is not supported with converters'.format(custom_type)
+            assert False, f'Custom type {custom_type} is not supported with converters'
+        elif parameter['use_array']:
+            # If the incoming type is array.array, we can just use that, otherwise we need to create an array.array that is initialized with the passed in value, which must be iterable
+            array_declaration = '{0}_array = get_ctypes_and_array(value=_converters.{2}({0}), array_type="{1}")  # case B520'.format(parameter['python_name'], get_array_type_for_api_type(parameter['ctypes_type']), parameter['python_api_converter_name'])
+            definitions.append(array_declaration)
+            definition = 'get_ctypes_pointer_for_buffer(value={0}_array, library_type={1}.{2})  # case B520'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
+        elif parameter['use_list']:
+            conversion_declaration = '{0}_converted = _converters.{1}({0})  # case B520'.format(parameter['python_name'], parameter['python_api_converter_name'])
+            definitions.append(conversion_declaration)
+            definition = 'get_ctypes_pointer_for_buffer(value={0}_converted, library_type={1}.{2})  # case B520'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
         else:
-            if parameter['use_array']:
-                # If the incoming type is array.array, we can just use that, otherwise we need to create an array.array that is initialized with the passed in value, which must be iterable
-                array_declaration = '{0}_array = get_ctypes_and_array(value=_converters.{2}({0}), array_type="{1}")  # case B520'.format(parameter['python_name'], get_array_type_for_api_type(parameter['ctypes_type']), parameter['python_api_converter_name'])
-                definitions.append(array_declaration)
-                definition = 'get_ctypes_pointer_for_buffer(value={0}_array, library_type={1}.{2})  # case B520'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
-            elif parameter['use_list']:
-                conversion_declaration = '{0}_converted = _converters.{1}({0})  # case B520'.format(parameter['python_name'], parameter['python_api_converter_name'])
-                definitions.append(conversion_declaration)
-                definition = 'get_ctypes_pointer_for_buffer(value={0}_converted, library_type={1}.{2})  # case B520'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
-            else:
-                assert False, "Expected either 'use_array' or 'use_list' to be True. Both False."
+            assert False, "Expected either 'use_array' or 'use_list' to be True. Both False."
     elif parameter['direction'] == 'in':
         if custom_type is not None:
             definition = 'get_ctypes_pointer_for_buffer([{0}.{1}(c) for c in {2}], library_type={0}.{1})  # case B540'.format(module_name, parameter['ctypes_type'], parameter['python_name'])
+        elif parameter['use_array']:
+            # If the incoming type is array.array, we can just use that, otherwise we need to create an array.array that is initialized with the passed in value, which must be iterable
+            array_declaration = '{0}_array = get_ctypes_and_array(value={0}, array_type="{1}")  # case B550'.format(parameter['python_name'], get_array_type_for_api_type(parameter['ctypes_type']))
+            definitions.append(array_declaration)
+            definition = 'get_ctypes_pointer_for_buffer(value={0}_array, library_type={1}.{2})  # case B550'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
+        elif parameter['use_list']:
+            definition = 'get_ctypes_pointer_for_buffer(value={0}, library_type={1}.{2})  # case B550'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
         else:
-            if parameter['use_array']:
-                # If the incoming type is array.array, we can just use that, otherwise we need to create an array.array that is initialized with the passed in value, which must be iterable
-                array_declaration = '{0}_array = get_ctypes_and_array(value={0}, array_type="{1}")  # case B550'.format(parameter['python_name'], get_array_type_for_api_type(parameter['ctypes_type']))
-                definitions.append(array_declaration)
-                definition = 'get_ctypes_pointer_for_buffer(value={0}_array, library_type={1}.{2})  # case B550'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
-            elif parameter['use_list']:
-                definition = 'get_ctypes_pointer_for_buffer(value={0}, library_type={1}.{2})  # case B550'.format(parameter['python_name'], module_name, parameter['ctypes_type'])
-            else:
-                assert False, "Expected either 'use_array' or 'use_list' to be True. Both False."
+            assert False, "Expected either 'use_array' or 'use_list' to be True. Both False."
     else:
         assert parameter['direction'] == 'out'
         assert 'size' in parameter, "Parameter {0} is output buffer but metadata doesn't define its 'size'".format(parameter['name'])

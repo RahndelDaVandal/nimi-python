@@ -10,7 +10,10 @@ def find_size_parameter(parameter_list, parameters, key='value'):
 
     Most behaviors will use 'value', but 'ivi-dance-with-a-twist' uses 'value' and 'value_twist'
     '''
-    assert type(parameter_list) is list or type(parameter_list) is dict, 'Wrong type: {}'.format(type(parameter_list))
+    assert (
+        type(parameter_list) is list or type(parameter_list) is dict
+    ), f'Wrong type: {type(parameter_list)}'
+
     if len(parameter_list) == 0:
         return None
     # Assumption: all parameters have the same size parameter, so we only need to use the first one
@@ -27,10 +30,14 @@ def find_size_parameter(parameter_list, parameters, key='value'):
 
 
 def find_custom_type(p, config):
-    for c in config['custom_types']:
-        if p['ctypes_type'] == c['ctypes_type']:
-            return c
-    return None
+    return next(
+        (
+            c
+            for c in config['custom_types']
+            if p['ctypes_type'] == c['ctypes_type']
+        ),
+        None,
+    )
 
 
 

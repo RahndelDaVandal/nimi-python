@@ -15,42 +15,30 @@ class MockFunctionCallError(Exception):
 
 class SideEffectsHelper(object):
     def __init__(self):
-        self._defaults = {}
-        self._defaults['CloseSession'] = {}
+        self._defaults = {'CloseSession': {}}
         self._defaults['CloseSession']['return'] = 0
-        self._defaults['Connect'] = {}
-        self._defaults['Connect']['return'] = 0
-        self._defaults['ConnectAndDisconnect'] = {}
-        self._defaults['ConnectAndDisconnect']['return'] = 0
-        self._defaults['Disconnect'] = {}
-        self._defaults['Disconnect']['return'] = 0
-        self._defaults['DisconnectAll'] = {}
-        self._defaults['DisconnectAll']['return'] = 0
-        self._defaults['ExpandRouteSpec'] = {}
-        self._defaults['ExpandRouteSpec']['return'] = 0
-        self._defaults['ExpandRouteSpec']['expandedRouteSpec'] = None
-        self._defaults['FindRoute'] = {}
-        self._defaults['FindRoute']['return'] = 0
-        self._defaults['FindRoute']['routeSpec'] = None
-        self._defaults['FindRoute']['pathCapability'] = None
-        self._defaults['GetAllConnections'] = {}
-        self._defaults['GetAllConnections']['return'] = 0
-        self._defaults['GetAllConnections']['routeSpec'] = None
-        self._defaults['GetError'] = {}
-        self._defaults['GetError']['return'] = 0
-        self._defaults['GetError']['errorNumber'] = None
-        self._defaults['GetError']['errorDescription'] = None
-        self._defaults['IsConnected'] = {}
-        self._defaults['IsConnected']['return'] = 0
-        self._defaults['IsConnected']['isConnected'] = None
-        self._defaults['IsDebounced'] = {}
-        self._defaults['IsDebounced']['return'] = 0
-        self._defaults['IsDebounced']['isDebounced'] = None
-        self._defaults['OpenSession'] = {}
-        self._defaults['OpenSession']['return'] = 0
-        self._defaults['OpenSession']['vi'] = None
-        self._defaults['WaitForDebounce'] = {}
-        self._defaults['WaitForDebounce']['return'] = 0
+        self._defaults['Connect'] = {'return': 0}
+        self._defaults['ConnectAndDisconnect'] = {'return': 0}
+        self._defaults['Disconnect'] = {'return': 0}
+        self._defaults['DisconnectAll'] = {'return': 0}
+        self._defaults['ExpandRouteSpec'] = {'return': 0, 'expandedRouteSpec': None}
+        self._defaults['FindRoute'] = {
+            'return': 0,
+            'routeSpec': None,
+            'pathCapability': None,
+        }
+
+        self._defaults['GetAllConnections'] = {'return': 0, 'routeSpec': None}
+        self._defaults['GetError'] = {
+            'return': 0,
+            'errorNumber': None,
+            'errorDescription': None,
+        }
+
+        self._defaults['IsConnected'] = {'return': 0, 'isConnected': None}
+        self._defaults['IsDebounced'] = {'return': 0, 'isDebounced': None}
+        self._defaults['OpenSession'] = {'return': 0, 'vi': None}
+        self._defaults['WaitForDebounce'] = {'return': 0}
 
     def __getitem__(self, func):
         return self._defaults[func]
@@ -59,28 +47,18 @@ class SideEffectsHelper(object):
         self._defaults[func] = val
 
     def niSE_CloseSession(self, vi):  # noqa: N802
-        if self._defaults['CloseSession']['return'] != 0:
-            return self._defaults['CloseSession']['return']
         return self._defaults['CloseSession']['return']
 
     def niSE_Connect(self, vi, connect_spec, multiconnect_mode, wait_for_debounce):  # noqa: N802
-        if self._defaults['Connect']['return'] != 0:
-            return self._defaults['Connect']['return']
         return self._defaults['Connect']['return']
 
     def niSE_ConnectAndDisconnect(self, vi, connect_spec, disconnect_spec, multiconnect_mode, operation_order, wait_for_debounce):  # noqa: N802
-        if self._defaults['ConnectAndDisconnect']['return'] != 0:
-            return self._defaults['ConnectAndDisconnect']['return']
         return self._defaults['ConnectAndDisconnect']['return']
 
     def niSE_Disconnect(self, vi, disconnect_spec):  # noqa: N802
-        if self._defaults['Disconnect']['return'] != 0:
-            return self._defaults['Disconnect']['return']
         return self._defaults['Disconnect']['return']
 
     def niSE_DisconnectAll(self, vi):  # noqa: N802
-        if self._defaults['DisconnectAll']['return'] != 0:
-            return self._defaults['DisconnectAll']['return']
         return self._defaults['DisconnectAll']['return']
 
     def niSE_ExpandRouteSpec(self, vi, route_spec, expand_action, expanded_route_spec, expanded_route_spec_size):  # noqa: N802
@@ -180,8 +158,6 @@ class SideEffectsHelper(object):
         return self._defaults['OpenSession']['return']
 
     def niSE_WaitForDebounce(self, vi, maximum_time_ms):  # noqa: N802
-        if self._defaults['WaitForDebounce']['return'] != 0:
-            return self._defaults['WaitForDebounce']['return']
         return self._defaults['WaitForDebounce']['return']
 
     # Helper function to setup Mock object with default side effects and return values

@@ -50,11 +50,11 @@ def generate_template(template_name, template_params, dest_file, in_zip_file=Fal
     if sys.version_info.major < 3:
         file_handle_public = codecs.open(dest_file, mode="w", encoding='utf-8')
         file_handle_public.write(rendered_template)
-        file_handle_public.close()
     else:
         file_handle_public = open(dest_file, 'wb')
         file_handle_public.write(bytes(rendered_template, "UTF-8"))
-        file_handle_public.close()
+
+    file_handle_public.close()
 
 
 

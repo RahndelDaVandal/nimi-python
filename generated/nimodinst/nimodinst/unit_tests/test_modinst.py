@@ -41,7 +41,7 @@ class TestSession(object):
             # TODO(marcoskirsch): What about the byte for the NULL character? Issue #526
             return (len(self.string_vals_device_looping[self.iteration_device_looping]))
         bytes_to_copy = self.string_vals_device_looping[self.iteration_device_looping].encode('ascii')
-        for i in range(0, len(bytes_to_copy)):
+        for i in range(len(bytes_to_copy)):
             attribute_value[i] = bytes_to_copy[i]
         self.iteration_device_looping += 1
         return 0
@@ -75,18 +75,14 @@ class TestSession(object):
         self.side_effects_helper['OpenInstalledDevicesSession']['deviceCount'] = 2
         with nimodinst.Session('') as session:
             assert len(session) == 2
-            count = 0
-            for d in session:
-                count += 1
+            count = sum(1 for _ in session)
             assert count == len(session)
 
     def test_iterating_for_empty(self):
         self.side_effects_helper['OpenInstalledDevicesSession']['deviceCount'] = 0
         with nimodinst.Session('') as session:
             assert len(session) == 0
-            count = 0
-            for d in session:
-                count += 1
+            count = sum(1 for _ in session)
             assert count == len(session)
 
     def test_get_extended_error_info(self):

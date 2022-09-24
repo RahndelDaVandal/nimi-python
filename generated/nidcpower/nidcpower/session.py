@@ -29,7 +29,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -46,14 +46,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _Acquisition(object):
@@ -4029,11 +4029,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Instantiate any repeated capability objects
@@ -4242,7 +4244,10 @@ class _SessionBase(object):
 
         '''
         if type(output_cutoff_reason) is not enums.OutputCutoffReason:
-            raise TypeError('Parameter output_cutoff_reason must be of type ' + str(enums.OutputCutoffReason))
+            raise TypeError(
+                f'Parameter output_cutoff_reason must be of type {str(enums.OutputCutoffReason)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         output_cutoff_reason_ctype = _visatype.ViInt32(output_cutoff_reason.value)  # case S130
@@ -4335,7 +4340,10 @@ class _SessionBase(object):
 
         '''
         if type(units) is not enums.ApertureTimeUnits:
-            raise TypeError('Parameter units must be of type ' + str(enums.ApertureTimeUnits))
+            raise TypeError(
+                f'Parameter units must be of type {str(enums.ApertureTimeUnits)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         aperture_time_ctype = _visatype.ViReal64(aperture_time)  # case S150
@@ -5900,7 +5908,10 @@ class _SessionBase(object):
 
         '''
         if type(compensation_type) is not enums.LCRCompensationType:
-            raise TypeError('Parameter compensation_type must be of type ' + str(enums.LCRCompensationType))
+            raise TypeError(
+                f'Parameter compensation_type must be of type {str(enums.LCRCompensationType)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         compensation_type_ctype = _visatype.ViInt32(compensation_type.value)  # case S130
@@ -6101,7 +6112,10 @@ class _SessionBase(object):
 
         '''
         if type(measurement_type) is not enums.MeasurementTypes:
-            raise TypeError('Parameter measurement_type must be of type ' + str(enums.MeasurementTypes))
+            raise TypeError(
+                f'Parameter measurement_type must be of type {str(enums.MeasurementTypes)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         measurement_type_ctype = _visatype.ViInt32(measurement_type.value)  # case S130
@@ -6592,7 +6606,10 @@ class _SessionBase(object):
 
         '''
         if type(output_cutoff_reason) is not enums.OutputCutoffReason:
-            raise TypeError('Parameter output_cutoff_reason must be of type ' + str(enums.OutputCutoffReason))
+            raise TypeError(
+                f'Parameter output_cutoff_reason must be of type {str(enums.OutputCutoffReason)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         output_cutoff_reason_ctype = _visatype.ViInt32(output_cutoff_reason.value)  # case S130
@@ -6748,7 +6765,10 @@ class _SessionBase(object):
 
         '''
         if type(output_state) is not enums.OutputStates:
-            raise TypeError('Parameter output_state must be of type ' + str(enums.OutputStates))
+            raise TypeError(
+                f'Parameter output_state must be of type {str(enums.OutputStates)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         output_state_ctype = _visatype.ViInt32(output_state.value)  # case S130
@@ -6833,7 +6853,10 @@ class _SessionBase(object):
 
         '''
         if type(trigger) is not enums.SendSoftwareEdgeTriggerType:
-            raise TypeError('Parameter trigger must be of type ' + str(enums.SendSoftwareEdgeTriggerType))
+            raise TypeError(
+                f'Parameter trigger must be of type {str(enums.SendSoftwareEdgeTriggerType)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         trigger_ctype = _visatype.ViInt32(trigger.value)  # case S130
@@ -7275,7 +7298,7 @@ class _SessionBase(object):
 
         '''
         if type(event_id) is not enums.Event:
-            raise TypeError('Parameter event_id must be of type ' + str(enums.Event))
+            raise TypeError(f'Parameter event_id must be of type {str(enums.Event)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_name_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         event_id_ctype = _visatype.ViInt32(event_id.value)  # case S130
@@ -7441,12 +7464,11 @@ class Session(_SessionBase):
         self._vi = self._fancy_initialize(resource_name, channels, reset, options, independent_channels)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("resource_name=" + pp.pformat(resource_name))
-        param_list.append("channels=" + pp.pformat(channels))
-        param_list.append("reset=" + pp.pformat(reset))
-        param_list.append("options=" + pp.pformat(options))
-        param_list.append("independent_channels=" + pp.pformat(independent_channels))
+        param_list = [f"resource_name={pp.pformat(resource_name)}"]
+        param_list.append(f"channels={pp.pformat(channels)}")
+        param_list.append(f"reset={pp.pformat(reset)}")
+        param_list.append(f"options={pp.pformat(options)}")
+        param_list.append(f"independent_channels={pp.pformat(independent_channels)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -7743,7 +7765,10 @@ class Session(_SessionBase):
             if channels:
                 # if we have a channels arg, we need to try and combine it with the resource name
                 # before calling into initialize with independent channels
-                channel_list = (resource_name + "/" + channel for channel in channels.split(","))
+                channel_list = (
+                    f"{resource_name}/{channel}" for channel in channels.split(",")
+                )
+
                 resource_string = ",".join(channel_list)
 
                 import warnings

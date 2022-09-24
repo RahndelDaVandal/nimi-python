@@ -30,7 +30,7 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
         assert library_type is not None, 'library_type is required for array.array'
         addr, _ = value.buffer_info()
         return ctypes.cast(addr, ctypes.POINTER(library_type))
-    elif str(type(value)).find("'numpy.ndarray'") != -1:
+    elif "'numpy.ndarray'" in str(type(value)):
         import numpy
         return numpy.ctypeslib.as_ctypes(value)
     elif isinstance(value, bytes):
@@ -47,14 +47,14 @@ def get_ctypes_pointer_for_buffer(value=None, library_type=None, size=None):
 
 def get_ctypes_and_array(value, array_type):
     if value is not None:
-        if isinstance(value, array.array):
-            value_array = value
-        else:
-            value_array = array.array(array_type, value)
-    else:
-        value_array = None
+        return (
+            value
+            if isinstance(value, array.array)
+            else array.array(array_type, value)
+        )
 
-    return value_array
+    else:
+        return None
 
 
 class _Acquisition(object):
@@ -1772,11 +1772,13 @@ class _SessionBase(object):
         self._encoding = encoding
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("repeated_capability_list=" + pp.pformat(repeated_capability_list))
-        param_list.append("vi=" + pp.pformat(vi))
-        param_list.append("library=" + pp.pformat(library))
-        param_list.append("encoding=" + pp.pformat(encoding))
+        param_list = [
+            f"repeated_capability_list={pp.pformat(repeated_capability_list)}"
+        ]
+
+        param_list.append(f"vi={pp.pformat(vi)}")
+        param_list.append(f"library={pp.pformat(library)}")
+        param_list.append(f"encoding={pp.pformat(encoding)}")
         self._param_list = ', '.join(param_list)
 
         # Instantiate any repeated capability objects
@@ -1837,7 +1839,10 @@ class _SessionBase(object):
 
         '''
         if type(array_meas_function) is not enums.ArrayMeasurement:
-            raise TypeError('Parameter array_meas_function must be of type ' + str(enums.ArrayMeasurement))
+            raise TypeError(
+                f'Parameter array_meas_function must be of type {str(enums.ArrayMeasurement)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         array_meas_function_ctype = _visatype.ViInt32(array_meas_function.value)  # case S130
         meas_waveform_size_ctype = _visatype.ViInt32()  # case S220
@@ -1908,7 +1913,10 @@ class _SessionBase(object):
 
         '''
         if type(meas_function) is not enums.ArrayMeasurement:
-            raise TypeError('Parameter meas_function must be of type ' + str(enums.ArrayMeasurement))
+            raise TypeError(
+                f'Parameter meas_function must be of type {str(enums.ArrayMeasurement)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         meas_function_ctype = _visatype.ViInt32(meas_function.value)  # case S130
@@ -1961,7 +1969,7 @@ class _SessionBase(object):
 
         '''
         if type(option) is not enums.Option:
-            raise TypeError('Parameter option must be of type ' + str(enums.Option))
+            raise TypeError(f'Parameter option must be of type {str(enums.Option)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         option_ctype = _visatype.ViInt32(option.value)  # case S130
@@ -2004,7 +2012,10 @@ class _SessionBase(object):
 
         '''
         if type(clearable_measurement_function) is not enums.ClearableMeasurement:
-            raise TypeError('Parameter clearable_measurement_function must be of type ' + str(enums.ClearableMeasurement))
+            raise TypeError(
+                f'Parameter clearable_measurement_function must be of type {str(enums.ClearableMeasurement)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         clearable_measurement_function_ctype = _visatype.ViInt32(clearable_measurement_function.value)  # case S130
@@ -2152,7 +2163,10 @@ class _SessionBase(object):
 
         '''
         if type(coupling) is not enums.VerticalCoupling:
-            raise TypeError('Parameter coupling must be of type ' + str(enums.VerticalCoupling))
+            raise TypeError(
+                f'Parameter coupling must be of type {str(enums.VerticalCoupling)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         range_ctype = _visatype.ViReal64(range)  # case S150
@@ -2244,7 +2258,7 @@ class _SessionBase(object):
         lrcl = len(self._repeated_capability_list)
         # Should this raise instead? If this asserts, is it the users fault?
         assert lwfm_i % lrcl == 0, 'Number of waveforms should be evenly divisible by the number of channels: len(wfm_info) == {0}, len(self._repeated_capability_list) == {1}'.format(lwfm_i, lrcl)
-        actual_num_records = int(lwfm_i / lrcl)
+        actual_num_records = lwfm_i // lrcl
         waveform_info._populate_channel_and_record_info(wfm_info, self._repeated_capability_list, range(record_number, record_number + actual_num_records))
 
         return wfm_info
@@ -2334,13 +2348,13 @@ class _SessionBase(object):
 
         meas_wfm, wfm_info = self._fetch_array_measurement(array_meas_function, meas_wfm_size, timeout)
 
-        record_length = int(len(meas_wfm) / len(wfm_info))
+        record_length = len(meas_wfm) // len(wfm_info)
         waveform_info._populate_samples_info(wfm_info, meas_wfm, record_length)
 
         wfm_info_count = len(wfm_info)
         channel_count = len(self._repeated_capability_list)
         assert wfm_info_count % channel_count == 0, 'Number of waveforms should be evenly divisible by the number of channels: len(wfm_info) == {0}, len(self._repeated_capability_list) == {1}'.format(wfm_info_count, channel_count)
-        actual_num_records = int(wfm_info_count / channel_count)
+        actual_num_records = wfm_info_count // channel_count
         waveform_info._populate_channel_and_record_info(wfm_info, self._repeated_capability_list, range(record_number, record_number + actual_num_records))
 
         return wfm_info
@@ -2434,7 +2448,7 @@ class _SessionBase(object):
         results_count = len(results)
         channel_count = len(self._repeated_capability_list)
         assert results_count % channel_count == 0, 'Number of results should be evenly divisible by the number of channels: len(results) == {0}, len(self._repeated_capability_list) == {1}'.format(results_count, channel_count)
-        actual_num_records = int(results_count / channel_count)
+        actual_num_records = results_count // channel_count
         waveform_info._populate_channel_and_record_info(output, self._repeated_capability_list, range(record_number, record_number + actual_num_records))
 
         return output
@@ -2541,7 +2555,7 @@ class _SessionBase(object):
         lrcl = len(self._repeated_capability_list)
         # Should this raise instead? If this asserts, is it the users fault?
         assert lwfm_i % lrcl == 0, 'Number of waveforms should be evenly divisible by the number of channels: len(wfm_info) == {0}, len(self._repeated_capability_list) == {1}'.format(lwfm_i, lrcl)
-        actual_num_records = int(lwfm_i / lrcl)
+        actual_num_records = lwfm_i // lrcl
         waveform_info._populate_channel_and_record_info(wfm_info, self._repeated_capability_list, range(record_number, record_number + actual_num_records))
 
         return wfm_info
@@ -2771,7 +2785,10 @@ class _SessionBase(object):
         if numpy.isfortran(waveform) is True:
             raise TypeError('waveform must be in C-order')
         if waveform.dtype is not numpy.dtype('float64'):
-            raise TypeError('waveform must be numpy.ndarray of dtype=float64, is ' + str(waveform.dtype))
+            raise TypeError(
+                f'waveform must be numpy.ndarray of dtype=float64, is {str(waveform.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         timeout_ctype = _converters.convert_timedelta_to_seconds_real64(timeout)  # case S140
@@ -2875,7 +2892,10 @@ class _SessionBase(object):
 
         '''
         if type(array_meas_function) is not enums.ArrayMeasurement:
-            raise TypeError('Parameter array_meas_function must be of type ' + str(enums.ArrayMeasurement))
+            raise TypeError(
+                f'Parameter array_meas_function must be of type {str(enums.ArrayMeasurement)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         timeout_ctype = _converters.convert_timedelta_to_seconds_real64(timeout)  # case S140
@@ -3007,7 +3027,10 @@ class _SessionBase(object):
         if numpy.isfortran(waveform) is True:
             raise TypeError('waveform must be in C-order')
         if waveform.dtype is not numpy.dtype('int16'):
-            raise TypeError('waveform must be numpy.ndarray of dtype=int16, is ' + str(waveform.dtype))
+            raise TypeError(
+                f'waveform must be numpy.ndarray of dtype=int16, is {str(waveform.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         timeout_ctype = _converters.convert_timedelta_to_seconds_real64(timeout)  # case S140
@@ -3137,7 +3160,10 @@ class _SessionBase(object):
         if numpy.isfortran(waveform) is True:
             raise TypeError('waveform must be in C-order')
         if waveform.dtype is not numpy.dtype('int32'):
-            raise TypeError('waveform must be numpy.ndarray of dtype=int32, is ' + str(waveform.dtype))
+            raise TypeError(
+                f'waveform must be numpy.ndarray of dtype=int32, is {str(waveform.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         timeout_ctype = _converters.convert_timedelta_to_seconds_real64(timeout)  # case S140
@@ -3267,7 +3293,10 @@ class _SessionBase(object):
         if numpy.isfortran(waveform) is True:
             raise TypeError('waveform must be in C-order')
         if waveform.dtype is not numpy.dtype('int8'):
-            raise TypeError('waveform must be numpy.ndarray of dtype=int8, is ' + str(waveform.dtype))
+            raise TypeError(
+                f'waveform must be numpy.ndarray of dtype=int8, is {str(waveform.dtype)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         timeout_ctype = _converters.convert_timedelta_to_seconds_real64(timeout)  # case S140
@@ -3383,7 +3412,7 @@ class _SessionBase(object):
         lwfm_i = len(wfm_info)
         lrcl = len(self._repeated_capability_list)
         assert lwfm_i % lrcl == 0, 'Number of waveforms should be evenly divisible by the number of channels: len(wfm_info) == {0}, len(self._repeated_capability_list) == {1}'.format(lwfm_i, lrcl)
-        actual_num_records = int(lwfm_i / lrcl)
+        actual_num_records = lwfm_i // lrcl
         waveform_info._populate_channel_and_record_info(wfm_info, self._repeated_capability_list, range(record_number, record_number + actual_num_records))
 
         return wfm_info
@@ -3458,7 +3487,10 @@ class _SessionBase(object):
 
         '''
         if type(scalar_meas_function) is not enums.ScalarMeasurement:
-            raise TypeError('Parameter scalar_meas_function must be of type ' + str(enums.ScalarMeasurement))
+            raise TypeError(
+                f'Parameter scalar_meas_function must be of type {str(enums.ScalarMeasurement)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         channel_list_ctype = ctypes.create_string_buffer(self._repeated_capability.encode(self._encoding))  # case C010
         timeout_ctype = _converters.convert_timedelta_to_seconds_real64(timeout)  # case S140
@@ -4392,11 +4424,10 @@ class Session(_SessionBase):
         self.tclk = nitclk.SessionReference(self._vi)
 
         # Store the parameter list for later printing in __repr__
-        param_list = []
-        param_list.append("resource_name=" + pp.pformat(resource_name))
-        param_list.append("id_query=" + pp.pformat(id_query))
-        param_list.append("reset_device=" + pp.pformat(reset_device))
-        param_list.append("options=" + pp.pformat(options))
+        param_list = [f"resource_name={pp.pformat(resource_name)}"]
+        param_list.append(f"id_query={pp.pformat(id_query)}")
+        param_list.append(f"reset_device={pp.pformat(reset_device)}")
+        param_list.append(f"options={pp.pformat(options)}")
         self._param_list = ', '.join(param_list)
 
         # Store the list of channels in the Session which is needed by some nimi-python modules.
@@ -4586,7 +4617,10 @@ class Session(_SessionBase):
 
         '''
         if type(which_one) is not enums._CalibrationTypes:
-            raise TypeError('Parameter which_one must be of type ' + str(enums._CalibrationTypes))
+            raise TypeError(
+                f'Parameter which_one must be of type {str(enums._CalibrationTypes)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         which_one_ctype = _visatype.ViInt32(which_one.value)  # case S130
         year_ctype = _visatype.ViInt32()  # case S220
@@ -4794,7 +4828,7 @@ class Session(_SessionBase):
 
         '''
         if type(slope) is not enums.TriggerSlope:
-            raise TypeError('Parameter slope must be of type ' + str(enums.TriggerSlope))
+            raise TypeError(f'Parameter slope must be of type {str(enums.TriggerSlope)}')
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_source_ctype = ctypes.create_string_buffer(trigger_source.encode(self._encoding))  # case C020
         slope_ctype = _visatype.ViInt32(slope.value)  # case S130
@@ -4852,9 +4886,12 @@ class Session(_SessionBase):
 
         '''
         if type(slope) is not enums.TriggerSlope:
-            raise TypeError('Parameter slope must be of type ' + str(enums.TriggerSlope))
+            raise TypeError(f'Parameter slope must be of type {str(enums.TriggerSlope)}')
         if type(trigger_coupling) is not enums.TriggerCoupling:
-            raise TypeError('Parameter trigger_coupling must be of type ' + str(enums.TriggerCoupling))
+            raise TypeError(
+                f'Parameter trigger_coupling must be of type {str(enums.TriggerCoupling)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_source_ctype = ctypes.create_string_buffer(trigger_source.encode(self._encoding))  # case C020
         level_ctype = _visatype.ViReal64(level)  # case S150
@@ -4924,9 +4961,12 @@ class Session(_SessionBase):
 
         '''
         if type(slope) is not enums.TriggerSlope:
-            raise TypeError('Parameter slope must be of type ' + str(enums.TriggerSlope))
+            raise TypeError(f'Parameter slope must be of type {str(enums.TriggerSlope)}')
         if type(trigger_coupling) is not enums.TriggerCoupling:
-            raise TypeError('Parameter trigger_coupling must be of type ' + str(enums.TriggerCoupling))
+            raise TypeError(
+                f'Parameter trigger_coupling must be of type {str(enums.TriggerCoupling)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_source_ctype = ctypes.create_string_buffer(trigger_source.encode(self._encoding))  # case C020
         level_ctype = _visatype.ViReal64(level)  # case S150
@@ -5063,13 +5103,25 @@ class Session(_SessionBase):
 
         '''
         if type(signal_format) is not enums.VideoSignalFormat:
-            raise TypeError('Parameter signal_format must be of type ' + str(enums.VideoSignalFormat))
+            raise TypeError(
+                f'Parameter signal_format must be of type {str(enums.VideoSignalFormat)}'
+            )
+
         if type(event) is not enums.VideoTriggerEvent:
-            raise TypeError('Parameter event must be of type ' + str(enums.VideoTriggerEvent))
+            raise TypeError(
+                f'Parameter event must be of type {str(enums.VideoTriggerEvent)}'
+            )
+
         if type(polarity) is not enums.VideoPolarity:
-            raise TypeError('Parameter polarity must be of type ' + str(enums.VideoPolarity))
+            raise TypeError(
+                f'Parameter polarity must be of type {str(enums.VideoPolarity)}'
+            )
+
         if type(trigger_coupling) is not enums.TriggerCoupling:
-            raise TypeError('Parameter trigger_coupling must be of type ' + str(enums.TriggerCoupling))
+            raise TypeError(
+                f'Parameter trigger_coupling must be of type {str(enums.TriggerCoupling)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_source_ctype = ctypes.create_string_buffer(trigger_source.encode(self._encoding))  # case C020
         enable_dc_restore_ctype = _visatype.ViBoolean(enable_dc_restore)  # case S150
@@ -5134,9 +5186,15 @@ class Session(_SessionBase):
 
         '''
         if type(window_mode) is not enums.TriggerWindowMode:
-            raise TypeError('Parameter window_mode must be of type ' + str(enums.TriggerWindowMode))
+            raise TypeError(
+                f'Parameter window_mode must be of type {str(enums.TriggerWindowMode)}'
+            )
+
         if type(trigger_coupling) is not enums.TriggerCoupling:
-            raise TypeError('Parameter trigger_coupling must be of type ' + str(enums.TriggerCoupling))
+            raise TypeError(
+                f'Parameter trigger_coupling must be of type {str(enums.TriggerCoupling)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         trigger_source_ctype = ctypes.create_string_buffer(trigger_source.encode(self._encoding))  # case C020
         low_level_ctype = _visatype.ViReal64(low_level)  # case S150
@@ -5593,7 +5651,10 @@ class Session(_SessionBase):
 
         '''
         if type(which_trigger) is not enums.WhichTrigger:
-            raise TypeError('Parameter which_trigger must be of type ' + str(enums.WhichTrigger))
+            raise TypeError(
+                f'Parameter which_trigger must be of type {str(enums.WhichTrigger)}'
+            )
+
         vi_ctype = _visatype.ViSession(self._vi)  # case S110
         which_trigger_ctype = _visatype.ViInt32(which_trigger.value)  # case S130
         error_code = self._library.niScope_SendSoftwareTriggerEdge(vi_ctype, which_trigger_ctype)
